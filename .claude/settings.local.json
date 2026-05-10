@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(python:*)",
+      "Bash(chcp 6500)",
+      "mcp__sqlserver-nutc__query",
+      "mcp__sqlserver-nutc__execute",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo view:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)"
+    ]
+  }
+}
