@@ -11,8 +11,20 @@ AS
 BEGIN
 SET NOCOUNT ON
 
--- 當契約編號被更新時，tr_110 會從 pos 覆寫所有欄位，此時不需記錄差異
-IF UPDATE(契約編號) RETURN
+-- 當契約編號「實際值」被變更時，tr_110 會從 pos 覆寫所有欄位，此時不需記錄差異
+-- 不能用 UPDATE(契約編號)，因為 ERP 整列 UPDATE 會讓它永遠為 TRUE
+IF EXISTS (
+    SELECT 1 FROM inserted i
+    INNER JOIN deleted d ON i.num = d.num
+    WHERE ISNULL(i.契約編號, '') <> ISNULL(d.契約編號, '')
+) RETURN
+
+-- chjernoz 異動表示核准動作 (approve)，不需記錄欄位差異
+IF EXISTS (
+    SELECT 1 FROM inserted i
+    INNER JOIN deleted d ON i.num = d.num
+    WHERE ISNULL(i.chjernoz, '') <> ISNULL(d.chjernoz, '')
+) RETURN
 
 -- 刪除已存在的明細記錄（重新計算差異）
 DELETE pos_log_detail
@@ -21,13 +33,13 @@ INNER JOIN inserted i ON pos_log_detail.num_pos_log = i.num
 WHERE i.num_pos > 0
 
 -- 比對 pos_log (inserted) 與 pos 的每個欄位，將差異寫入 pos_log_detail
-INSERT INTO pos_log_detail (fieldname, newvalue, oldvalue, menuflag, 契約狀態, num_pos, num_pos_log)
+INSERT INTO pos_log_detail (fieldname, newvalue, oldvalue, menuflag, 契約編號, num_pos, num_pos_log)
 SELECT
     v.fieldname,
     v.newvalue,
     v.oldvalue,
     i.menuflag,
-    i.契約狀態,
+    i.契約編號,
     i.num_pos,
     i.num
 FROM inserted i
