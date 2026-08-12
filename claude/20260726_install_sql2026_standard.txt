@@ -1,0 +1,16 @@
+幫我還原資料庫 casper , jet 
+server:ACPAYPOSCRM
+id:casper
+pwd:CasChrAliJimJam
+version:sql2025 standard dev 
+
+database:casper
+備份檔案在 
+C:\DB_BAK\CASPER_20260726.bak
+
+database:jet
+備份檔案在 
+C:\DB_BAK\JET_20260726.bak
+
+並且幫我將 sql server 
+ip 與 port 設定成 192.168.50.53:8001

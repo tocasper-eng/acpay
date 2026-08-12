@@ -28,6 +28,10 @@ Directories use numeric/alphabetic prefixes mapping to business domains:
 | 97 | Manufacturing | `eep_mach` |
 | 98 | Production | `eep_wkct`, `eep_bom` |
 | 99 | System Configuration | `eep_comp`, `eep_sysp` |
+| 62J | 一盤領用（出庫） | `eep_toh`, `eep_tod` |
+| 62K | 一盤繳庫（入庫） | `eep_trh`, `eep_trd` |
+| 66D | 庫存調發（調撥） | `eep_tdh`, `eep_tdd` |
+| 66H | 庫存日結 | `stka_itea`, `stka_clitea` |
 | a0 | Customer Service | — |
 | b0 | Work Orders | — |
 | e0 | Contract Changes | `pos`, `pos_log` |
@@ -69,6 +73,69 @@ Every `eep_*` table includes:
 - `ep_timer_{entity}_del.sql` — Cleanup procedure
 - `tr_{seq}_timer_{entity}.sql` — Triggers
 
+### WMS 庫存追蹤架構 (claude/wms/)
+
+三層 trigger chain 即時追蹤庫存異動，全部由 T-SQL trigger + stored procedure 驅動，前端零開發。
+
+**第一層：來源表 → mes_itio（庫存異動明細）**
+
+| 來源表 | Trigger | ioseqseq | ioqty 規則 |
+|--------|---------|----------|-----------|
+| `eep_trd` (入庫) | `tr_011_eep_trd_mes_itio` | `TRD ` | +ABS(trqty) |
+| `eep_tod` (出庫) | `tr_011_eep_tod_mes_itio` | `TOD ` | -ABS(toqty) |
+| `eep_tdd` (調撥) | `tr_011_eep_tdd_mes_itio` | `TDDO`/`TDDI` | -ABS/+ABS(tdqty) |
+| `pos_tod` (合約) | `tr_011_pos_tod_mes_itio` | `TDD-`/`TDD+` | -qty |
+
+這些 trigger 僅在 **AFTER UPDATE, DELETE** 觸發。INSERT 時由 `tr_100` 設定 menuflag，觸發 UPDATE，間接觸發 `tr_011`。
+
+**第二層：mes_itio → mes_itea1~4（每日彙總）**
+
+`tr_mes_itio_sync` (AFTER INSERT, UPDATE, DELETE) 收集受影響的 (itemno, posino, wareno, plantno, compno)，呼叫 `sp_recalc_itea`：
+
+| 表 | 維度 | PK |
+|----|------|-----|
+| `mes_itea1` | compno (公司) | (iodate, itemno, compno) |
+| `mes_itea2` | plantno (工廠) | (iodate, itemno, plantno) |
+| `mes_itea3` | wareno (倉庫) | (iodate, itemno, wareno) |
+| `mes_itea4` | posino (儲位) | (iodate, itemno, posino) |
+
+每日彙總欄位：`OpeningQuantity`、`InboundQuantity`、`OutboundQuantity`、`ClosingQuantity`，使用 window function 計算累計餘額。無異動的日期不保留。
+
+**第三層：mes_itea → mes_mmbe1~4（即時庫存快照）**
+
+`sp_recalc_mmbe` 取每個 (itemno, 階層碼) 在 mes_itea 中最後一天的 ClosingQuantity 寫入 mes_mmbe：
+
+| 表 | 維度 | PK |
+|----|------|-----|
+| `mes_mmbe1` | compno | (itemno, compno) |
+| `mes_mmbe2` | plantno | (itemno, plantno) |
+| `mes_mmbe3` | wareno | (itemno, wareno) |
+| `mes_mmbe4` | posino | (itemno, posino) |
+
+**階層解析規則：**
+- `posino`：若來源無 posino，以 wareno 代入
+- `plantno`：優先用來源表的 plantno → eep_ware.plantno → wareno
+- `compno`：優先用 eep_plant.compno → 預設 `公司代碼`
+
+### 庫存模組完整 Trigger 清單
+
+| 表 | Trigger | 事件 | 用途 |
+|----|---------|------|------|
+| `eep_tdd` | `tr_100_66d_10_eep_tdd` | INSERT | menuflag |
+| `eep_tdd` | `tr_011_eep_tdd_mes_itio` | UPDATE,DELETE | → mes_itio |
+| `eep_tdh` | `tr_100_66d_00_eep_tdh` | INSERT | menuflag |
+| `eep_tdh` | `tr_010_66d_00_timer_eep` | UPDATE | → timer_eep |
+| `eep_tod` | `tr_100_62j_10_eep_tod` | INSERT | menuflag |
+| `eep_tod` | `tr_011_eep_tod_mes_itio` | UPDATE,DELETE | → mes_itio |
+| `eep_toh` | `tr_100_62j_00_eep_toh` | INSERT | menuflag |
+| `eep_toh` | `tr_010_62j_00_timer_eep` | UPDATE | → timer_eep |
+| `eep_trd` | `tr_100_62k_10_eep_trd` | INSERT | menuflag |
+| `eep_trd` | `tr_011_eep_trd_mes_itio` | UPDATE,DELETE | → mes_itio |
+| `eep_trh` | `tr_100_62k_00_eep_trh` | INSERT | menuflag |
+| `eep_trh` | `tr_010_62k_00_timer_eep` | UPDATE | → timer_eep |
+| `pos_tod` | `tr_011_pos_tod_mes_itio` | UPDATE,DELETE | → mes_itio |
+| `mes_itio` | `tr_mes_itio_sync` | INSERT,UPDATE,DELETE | → sp_recalc_itea → sp_recalc_mmbe |
+
 ### Contract Change Pattern (e0_主約變更/)
 
 The `up_e01_zy.sql` procedure implements field-level change tracking, comparing old vs. new values and recording diffs as `舊值→新值` in the remark field.
@@ -85,10 +152,132 @@ SQL scripts must be executed against the target database in this order:
 
 Each SQL file follows the pattern: DROP IF EXISTS → SET options → CREATE.
 
+## Database Connection
+
+### 正式環境（遠端）
+
+| 項目 | 值 |
+|------|------|
+| server | `163.17.141.61,8081` |
+| database | `acpay` |
+| user | `casper` |
+| password | `CasChrAliJimJam` |
+| MCP 工具 | `mcp__sqlserver-nutc__*`（連的是 port 8081，schema 可能不同） |
+
+### 內網環境（192.168.50.53）
+
+| 項目 | 值 |
+|------|------|
+| server | `192.168.50.53,8000` |
+| database | `acpay` |
+| user | `drlee` |
+| password | `ACpos#1234` |
+| 連線方式 | pymssql 直連（`server='192.168.50.53', port=8000`） |
+| MCP 工具 | 無（一律用 pymssql） |
+
+> 此環境 schema 與遠端 8081 **不同**（例如 `eep_item` 只有 13 個欄位、無 `chjernoz`），
+> 匯入前務必在此伺服器上查 `INFORMATION_SCHEMA.COLUMNS`。
+
+### 本機環境
+
+| 項目 | 值 |
+|------|------|
+| server | `.\SQLEXPRESS` |
+| 靜態 TCP port | `8000`（instance 有設靜態埠，pymssql/pyodbc 用 `localhost,8000` 亦可） |
+| database | `acpay` |
+| 驗證方式 | **Windows 驗證**（`Trusted_Connection=yes`）— SQL 帳號 `sa/6153` 目前登入失敗（error 18456），改用 Windows 驗證 |
+| ODBC driver | `ODBC Driver 17 for SQL Server` |
+| MCP 工具 | `mcp__sqlserver-local__*` |
+
+> **注意：** 本機 SQL 帳號 `sa/6153` 已無法登入（伺服器為 mixed mode，但 sa 密碼不符或已停用）。
+> 本機作業一律用 **pyodbc + Windows 驗證**；`pymssql` 對具名 instance 支援不佳，需改指定 `localhost` 加 port。
+
+### 連線注意事項
+
+- **查 schema 務必用 pymssql 直連目標伺服器**，MCP 工具 `mcp__sqlserver-nutc__*` 連的是 port 8081
+- **定序（Collation）標準為 `Chinese_Taiwan_Stroke_CI_AS`**，所有 SQL 操作遇到定序不一致時，一律轉換成此定序。JOIN、WHERE、ORDER BY 涉及中文欄位比對時加 `COLLATE Chinese_Taiwan_Stroke_CI_AS`
+- nvarchar 欄位寫入中文時，值前面要加 `N` 前綴（如 `N'中文'`）
+- `num` 欄位為 identity（自動編號），INSERT 時不需指定
+- **欄位名可能含尾端空白**：192.168.50.53 的 `eep_item` 有一欄實際名稱是 `itemna `（結尾一個空白），
+  SQL 中必須寫成 `[itemna ]`，否則報 Invalid column name
+- **char 欄位比對為大小寫不分（CI 定序）**：`WHERE itemno='BLUEKA'` 會命中 `Blueka`，
+  以 itemno 當 key 做 upsert 時，大小寫不同的兩筆會被視為同一筆
+
+### 連線範例
+
+```python
+# 正式環境（遠端）— pymssql
+import pymssql
+conn = pymssql.connect(server='163.17.141.61', port=8081, user='casper', password='CasChrAliJimJam', database='acpay', charset='utf8')
+
+# 內網環境 192.168.50.53 — pymssql
+conn = pymssql.connect(server='192.168.50.53', port=8000, user='drlee', password='ACpos#1234', database='acpay', charset='utf8')
+
+# 本機 — pyodbc + Windows 驗證（sa/6153 已無法登入，改用此法）
+import pyodbc
+cs = r'DRIVER={ODBC Driver 17 for SQL Server};SERVER=.\SQLEXPRESS;DATABASE=acpay;Trusted_Connection=yes;'
+conn = pyodbc.connect(cs)
+# pyodbc 已原生支援 unicode 參數，中文值不需手動加 N 前綴；SQL 字面值仍需 N'中文'
+```
+
+## 對照表（eep_trd vs eep_tod）
+
+eep_trd 和 eep_tod 是結構相似的平行資料表，欄位命名規則不同：
+
+| eep_trd | eep_tod | 說明 |
+|---------|---------|------|
+| trno | tono | 單號 |
+| trseq | toseq | 序號 |
+| trqty | toqty | 數量 |
+| trno2 | tono2 | 來源單號 |
+| trdate | todate | 日期 |
+| trtype | totype | 類型 |
+
+匯入 eep_trd 時，通常也需要同步匯入 eep_tod。
+
+### 對照表（eep_tdd 調撥明細）
+
+eep_tdd 是調撥專用明細表，使用 `td` 前綴，且有來源/目的倉庫雙欄位：
+
+| eep_tdd | 說明 |
+|---------|------|
+| tdno | 單號 |
+| tdseq | 序號 |
+| tdqty | 數量 |
+| warenofm / warenmfm | 來源倉庫代碼/名稱 |
+| warenoto / warenmto | 目的倉庫代碼/名稱 |
+| tddate | 日期 |
+
+### 對照表（mes_itio 庫存異動）
+
+| 欄位 | 型態 | 說明 |
+|------|------|------|
+| iono | nvarchar(20) | 來源單號（trno/tono/tdno） |
+| ioseq | char(4) | 來源序號 LEFT(xseq, 4) |
+| ioseqseq | char(4) | 來源類型（TRD /TOD /TDDO/TDDI/TDD-/TDD+） |
+| iodate | char(8) | 異動日期 YYYYMMDD |
+| itemno | nvarchar(40) | 物料編號 |
+| posino | nvarchar(40) | 儲位（無則=wareno） |
+| wareno | nvarchar(40) | 倉庫 |
+| plantno | nvarchar(40) | 工廠 |
+| compno | nvarchar(40) | 公司 |
+| ioqty | decimal(20,2) | 數量（正=入庫, 負=出庫） |
+
+## 關聯表查找規則
+
+匯入明細資料時，以下欄位需從關聯表查找或反向新增：
+
+| 欄位 | 來源 | 規則 |
+|------|------|------|
+| `unitno` | `eep_item` | `WHERE eep_item.itemno = 資料.itemno` |
+| `warenm` | `eep_ware` | `WHERE eep_ware.wareno = 資料.wareno`；找不到時反向新增 eep_ware |
+| `clasno` | `eep_clas` | `WHERE eep_clas.clasnm = 資料.clasnm`（需 COLLATE）；查不到時留 NULL 並回報 |
+
 ## Working with This Codebase
 
-- Use the MCP SQL Server tools (`mcp__sqlserver-nutc__*`) to query and execute against the live database
-- When modifying a module, read the table definition first to understand column names
-- The `menuflag` column is the key link between the ERP UI menu system and database records
+- 查 schema、匯入資料時，使用 pymssql 直連目標伺服器（見上方 Database Connection）
+- **匯入前一定要在目標伺服器上查 INFORMATION_SCHEMA.COLUMNS**，不要依賴 MCP 工具的 schema
+- 讀取 xlsx 時使用 `openpyxl`，若有公式欄位需用 `data_only=True`
+- `menuflag` 由 AFTER INSERT trigger 自動設定，INSERT 時指定的值會被覆蓋
 - `uf_strzero(num, length)` is a core utility that zero-pads integers to a specified width
 - Column comments in table DDL (after `--`) document the Chinese field name/purpose

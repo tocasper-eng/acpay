@@ -1,0 +1,3 @@
+<須遵守行為>
+每次任務完成都要更新CLAUDE.md , SKILL.md 並上傳 github
+</須遵守行為>

@@ -1,0 +1,4 @@
+<github repo>
+tocasper-eng\gemio_wms
+tocasper@g.ncu.edu.tw 
+</github repo>

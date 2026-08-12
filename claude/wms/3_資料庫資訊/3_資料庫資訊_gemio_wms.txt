@@ -1,0 +1,6 @@
+<database>
+sql server:163.17.141.61,8081 
+database :gemio_wms 
+id:casper
+pwd:CasChrAliJimJam
+</database>

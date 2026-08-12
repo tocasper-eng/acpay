@@ -1,0 +1,12 @@
+這整套庫存的異動邏輯，
+
+你能畫面圖解說，
+
+並清楚的交待這些物件的關係嗎？
+
+table 
+view 
+trigger
+store procedure 
+user define type 
+user define function 

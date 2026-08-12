@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import openpyxl; print\\('openpyxl ok'\\)\")",
+      "Bash(python -c \"import pyodbc; print\\('pyodbc ok'\\)\")",
+      "Bash(python -c \"import pandas; print\\('pandas ok'\\)\")",
+      "Bash(py --version)",
+      "PowerShell(py *)",
+      "PowerShell(sqlcmd *)",
+      "mcp__sqlserver-nutc__query",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "mcp__sqlserver-nutc__execute",
+      "Bash(claude mcp list:*)",
+      "Bash(echo:*)",
+      "Bash(claude mcp add:*)"
+    ]
+  }
+}

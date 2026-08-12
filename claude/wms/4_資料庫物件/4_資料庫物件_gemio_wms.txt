@@ -1,0 +1,8 @@
+<database_object>
+tb_mes_itio :所有的庫存異動單據
+tb_mes_level:庫存層級共四個層級
+tb_mes_itea1:庫存層一的日結餘額
+tb_mes_itea2:庫存層二的日結餘額
+tb_mes_itea3:庫存層三的日結餘額
+tb_mes_itea4:庫存層四的日結餘額
+</database_object>

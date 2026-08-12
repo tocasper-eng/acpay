@@ -1,0 +1,5 @@
+<mission>
+寫一套 ERP 將後端 sql server 極大化，
+前端開發極少化。
+能用 T-SQL 相關物件解決的，就絕不用前端處理。 
+</mission>

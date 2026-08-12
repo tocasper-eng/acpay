@@ -1,0 +1,47 @@
+<任務描述>
+
+請將目錄下的 xlsx ，匯入 sql server ，
+</任務描述>
+
+<資料庫資訊>
+
+server:.\sqlexpress
+database:acpay 
+id:sa
+pwd:6153
+table:eep_trd
+</資料庫資訊>
+
+</db server>
+
+<工作目錄>
+C:\Users\tocasperhotmail.com\Nutstore\1\Obsidian\EEP\35_ACPAY\62K_一盤繳庫\claude\20260707_ac_eep_trd_資料
+</工作目錄>
+
+
+<xls檔名>
+20260703_62k.xlsx
+</xls檔名>
+
+<限制條件>
+
+ 
+table eep_trd 
+field 
+trseq 請用 0010 , 0020 , 0030 .... 編碼
+menuflag = 62K_00_0000000000001
+clasno   = clas.clasno if clas.clasnm = eep_trd.clasnm 
+trno2    = TR26060001
+chjernoi = TR26060001
+chjernoz = Y
+
+ 
+
+</限制條件>
+
+
+<驗証條件>
+select sum(trqty) , count(*) from eep_tod where tono = 'TR26060001'
+答案是：13972 ，218  
+</驗証條件>
+

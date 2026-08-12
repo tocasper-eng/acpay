@@ -1,0 +1,141 @@
+<任務>
+用 trigger 與 store procedure ，完成下列任務。
+讓我在前端都不用處理庫存日結表。
+
+注意：日結表，必須以  WARENO 倉+ ITEMNO件號+IODATE 日期 鍵值的結算。
+
+
+日結表最詳細的是 
+stka_itea 
+
+然後再關聯至 select plantno from eep_wareno where wareno=@wareno 
+取得 plantno 之後，
+還要再計算第二日結表 
+stka_itea_plantno
+ 
+然後再關聯至 select compno from eep_plantno where plantno=@plantno
+還要再計算第三日結表 
+stka_itea_compno
+ 
+    
+   
+
+</任務>
+
+ 
+<database>
+sql server:163.17.141.61,8081
+database :ACPAY 
+id:casper
+pwd:CasChrAliJimJam
+</database>
+
+ 
+
+<庫存異動明細>
+create view   eep_itio as 
+SELECT '62J' as fiels
+      ,tono
+      ,toseq
+      ,itemno
+      ,wareno
+      ,toqty 
+      ,todate 
+FROM [dbo].[eep_tod]  
+union all 
+SELECT '62K' as fiels
+      ,trno
+      ,trseq
+      ,itemno
+      ,wareno
+      ,trqty 
+      ,trdate 
+FROM [dbo].[eep_trd]  
+union all 
+SELECT '66D' as fiels
+      ,tdno
+      ,tdseq
+      ,itemno
+      ,warenofm
+      ,tdqty*(-1) 
+      ,tddate 
+FROM [dbo].[eep_tdd]  
+union all 
+SELECT '66D' as fiels
+      ,tdno
+      ,tdseq
+      ,itemno
+      ,warenoto
+      ,tdqty 
+      ,tddate 
+FROM [dbo].[eep_tdd]  
+</庫存異動明細>
+ 
+
+
+<日結資料表1>
+CREATE TABLE stka_itea(
+iodate     char(08)          not NULL,--
+wareno     char(08)          not NULL,--
+itemno     nvarchar(40)      not NULL,--
+[OpeningQuantity]  [decimal](18, 3) NOT NULL,
+[InboundQuantity]  [decimal](18, 3) NOT NULL,
+[OutboundQuantity] [decimal](18, 3) NOT NULL,
+[ClosingQuantity]  [decimal](18, 3) NOT NULL,
+)  
+</日結資料表1>
+						   						  
+<日結資料表2>
+CREATE TABLE stka_itea_plantno(
+iodate     char(08)          not NULL,--
+plantno    char(08)          not NULL,--
+itemno     nvarchar(40)      not NULL,--
+
+[OpeningQuantity]  [decimal](18, 3) NOT NULL,
+[InboundQuantity]  [decimal](18, 3) NOT NULL,
+[OutboundQuantity] [decimal](18, 3) NOT NULL,
+[ClosingQuantity]  [decimal](18, 3) NOT NULL,
+)  
+</日結資料表2>
+
+<日結資料表3>
+CREATE TABLE stka_itea_compno(
+iodate     char(08)          not NULL,--
+compno     char(08)          not NULL,--
+itemno     nvarchar(40)      not NULL,--
+
+[OpeningQuantity]  [decimal](18, 3) NOT NULL,
+[InboundQuantity]  [decimal](18, 3) NOT NULL,
+[OutboundQuantity] [decimal](18, 3) NOT NULL,
+[ClosingQuantity]  [decimal](18, 3) NOT NULL,
+)  
+</日結資料表3>
+
+<特殊狀況>
+stka_itea eep_itio 都不必處理 posino，
+若發現有 posino 的欄位，就將 posino = wareno 
+</特殊狀況>
+
+ 
+ 
+
+
+<詳細說明>
+
+請在 view eep_itio 發生新增刪除修改時，
+更新 stka_itea 
+
+當 inbound , outbound 有變動時，就要更新此表
+
+請考慮一種特殊狀況，
+使用者常常不按日期的順序輸入單據
+
+程式完成之後，再用繁體中文 回寫 CLAUDE.md , SKILL.md  
+
+</詳細說明>
+
+<CLAUDE>
+
+程式完成之後，再用繁體中文 回寫 CLAUDE.md , SKILL.md  
+
+</CLAUDE>
