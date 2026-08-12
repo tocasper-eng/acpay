@@ -264,9 +264,9 @@
     </div>
   </div>
   <div class="info-bar" id="infoBar">
-    <span>TBLDEF: <strong>18</strong> 筆關聯定義</span>
-    <span>涵蓋 <strong>24</strong> 張資料表</span>
-    <span>功能模組: <strong>13</strong> 組</span>
+    <span>TBLDEF: <strong>22</strong> 筆關聯定義</span>
+    <span>涵蓋 <strong>31</strong> 張資料表</span>
+    <span>功能模組: <strong>16</strong> 組</span>
     <span>資料來源: acpay @ 163.17.141.61:8081</span>
   </div>
 </div>
@@ -292,7 +292,11 @@ const TBLDEF = [
   {mn:'C01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_pos',  pdesc:'新案追蹤',pkeys:'契約編號'},
   {mn:'D01',child:'eep_d01',  cdesc:'連鎖客戶',ckeys:'連鎖性客戶編號',parent:'pos',      pdesc:'新案追蹤',pkeys:'連鎖性客戶編號'},
   {mn:'E01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'pos_log',  pdesc:'契約變更',pkeys:'契約編號'},
-  {mn:'F01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_dac',  pdesc:'解約建檔',pkeys:'契約編號'}
+  {mn:'F01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_dac',  pdesc:'解約建檔',pkeys:'契約編號'},
+  {mn:'61A',child:'eep_bmd', cdesc:'組合子檔',ckeys:'bmno',          parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'bmno'},
+  {mn:'61A',child:'系統別',   cdesc:'系統別',  ckeys:'系統別代號',    parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'系統別代號'},
+  {mn:'48E',child:'vw_POS_CRM_ACRTB',cdesc:'結帳單子',ckeys:'TB001,TB002',parent:'vw_POS_CRM_ACRTA',pdesc:'結帳單主',pkeys:'TA001,TA002'},
+  {mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'教款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'教款單主',pkeys:'TC001,TC002'}
 ];
 
 /* ── Duplicate A01 row removed (eep_iwd_10 補充說明 is same FK as 服務內容) ── */
@@ -301,13 +305,14 @@ const TBLDEF = [
    DATA — Menu labels
    ================================================================ */
 const MENU_LABELS = {
+  '48E':'結帳單','48F':'教款單','61A':'商品組合',
   '62J':'一盤領用','62K':'一盤繳庫','66D':'庫存調撥','67Q':'庫存異動查詢',
   '91H':'選單欄位定義','91I':'欄位片語內容','96A':'倉庫儲位設定',
   'A01':'客服通知','B01':'外派工單','C01':'新案建檔',
   'D01':'連鎖客戶','E01':'主約變更','F01':'解約建檔'
 };
 
-const MENU_ORDER = ['62J','62K','66D','67Q','96A','A01','B01','C01','D01','E01','F01','91H','91I'];
+const MENU_ORDER = ['48E','48F','61A','62J','62K','66D','67Q','96A','A01','B01','C01','D01','E01','F01','91H','91I'];
 
 /* ================================================================
    DATA — COLDEF columns per table (audit trail fields removed)
@@ -470,6 +475,44 @@ const COLDEF = {
 ],
 'eep_d01':[
   {f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_bmh':[
+  {f:'bmno',c:'組合代碼'},{f:'bmtype',c:'組合型態'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_bmd':[
+  {f:'bmno',c:'組合代碼'},{f:'bmseq',c:'項次'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},
+  {f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},
+  {f:'bmqty',c:'數量'},{f:'bmpri',c:'金額'},{f:'bmtype',c:'組合型態'},{f:'remark',c:'備註說明'}
+],
+'系統別':[
+  {f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'}
+],
+'vw_POS_CRM_ACRTA':[
+  {f:'TA001',c:'結帳單別'},{f:'TA002',c:'結帳單號'},{f:'TA003',c:'交易日期'},{f:'TA004',c:'客戶代號'},
+  {f:'TA005',c:'收款業務員'},{f:'TA006',c:'廠別'},{f:'TA007',c:'統一編號'},{f:'TA008',c:'銀行名稱'},
+  {f:'TA009',c:'幣別'},{f:'TA010',c:'匯率'},{f:'TA015',c:'發票號碼'},{f:'TA016',c:'發票日期'},
+  {f:'TA017',c:'發票貨款'},{f:'TA018',c:'發票稅額'},{f:'TA020',c:'預計收款日'},{f:'TA022',c:'備註'},
+  {f:'TA029',c:'應收金額'},{f:'TA030',c:'營業稅額'},{f:'TA031',c:'已收金額'},{f:'TA032',c:'沖款金額'},
+  {f:'TA033',c:'未收金額'},{f:'TA034',c:'折讓金額'}
+],
+'vw_POS_CRM_ACRTB':[
+  {f:'TB001',c:'結帳單別'},{f:'TB002',c:'結帳單號'},{f:'TB003',c:'序號'},{f:'TB004',c:'來源'},
+  {f:'TB005',c:'憑證單別'},{f:'TB006',c:'憑證單號'},{f:'TB007',c:'憑證序號'},{f:'TB008',c:'憑證日期'},
+  {f:'TB009',c:'應收金額'},{f:'TB010',c:'差額'},{f:'TB011',c:'備註'},{f:'TB013',c:'科目編號'},
+  {f:'TB017',c:'原幣未稅金額'},{f:'TB018',c:'原幣稅額'},{f:'TB019',c:'本幣未稅金額'},{f:'TB020',c:'本幣稅額'},
+  {f:'TB021',c:'部門別'},{f:'TB022',c:'專案代號'}
+],
+'vw_POS_CRM_ACRTC':[
+  {f:'TC001',c:'收款單別'},{f:'TC002',c:'收款單號'},{f:'TC003',c:'收款日期'},{f:'TC004',c:'客戶代號'},
+  {f:'TC005',c:'幣別'},{f:'TC007',c:'備註'},{f:'TC010',c:'廠別'},
+  {f:'TC011',c:'原幣借方金額'},{f:'TC012',c:'原幣貸方金額'},{f:'TC013',c:'本幣借方金額'},{f:'TC014',c:'本幣貸方金額'},
+  {f:'TC015',c:'收款業務員'},{f:'TC017',c:'單據日期'}
+],
+'vw_POS_CRM_ACRTD':[
+  {f:'TD001',c:'收款單別'},{f:'TD002',c:'收款單號'},{f:'TD003',c:'序號'},{f:'TD004',c:'借貸'},
+  {f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD008',c:'會計科目'},
+  {f:'TD009',c:'到期日'},{f:'TD010',c:'幣別'},{f:'TD011',c:'匯率'},{f:'TD012',c:'立帳金額'},
+  {f:'TD013',c:'立帳餘額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'},{f:'TD017',c:'備註'}
 ]
 };
 
