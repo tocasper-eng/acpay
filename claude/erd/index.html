@@ -304,7 +304,7 @@ const TBLDEF = [
   {mn:'61A',child:'eep_bmd', cdesc:'組合子檔',ckeys:'bmno',          parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'bmno'},
   {mn:'61A',child:'系統別',   cdesc:'系統別',  ckeys:'系統別代號',    parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'系統別代號'},
   {mn:'48E',child:'vw_POS_CRM_ACRTB',cdesc:'結帳單子',ckeys:'TB001,TB002',parent:'vw_POS_CRM_ACRTA',pdesc:'結帳單主',pkeys:'TA001,TA002'},
-  {mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'教款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'教款單主',pkeys:'TC001,TC002'}
+  {mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'收款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'收款單主',pkeys:'TC001,TC002'}
 ];
 
 /* ── Duplicate A01 row removed (eep_iwd_10 補充說明 is same FK as 服務內容) ── */
@@ -313,7 +313,7 @@ const TBLDEF = [
    DATA — Menu labels
    ================================================================ */
 const MENU_LABELS = {
-  '48E':'結帳單','48F':'教款單','61A':'商品組合',
+  '48E':'結帳單','48F':'收款單','61A':'商品組合',
   '62J':'一盤領用','62K':'一盤繳庫','66D':'庫存調撥','67Q':'庫存異動查詢',
   '91H':'選單欄位定義','91I':'欄位片語內容','96A':'倉庫儲位設定',
   'A01':'客服通知','B01':'外派工單','C01':'新案建檔',

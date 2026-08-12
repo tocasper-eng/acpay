@@ -31,7 +31,7 @@
 | menunum | 名稱 | 資料表 | FK 鍵值 |
 |---------|------|--------|---------|
 | 48E | 結帳單 | vw_POS_CRM_ACRTB → vw_POS_CRM_ACRTA | TB001,TB002 |
-| 48F | 教款單 | vw_POS_CRM_ACRTD → vw_POS_CRM_ACRTC | TD001,TD002 |
+| 48F | 收款單 | vw_POS_CRM_ACRTD → vw_POS_CRM_ACRTC | TD001,TD002 |
 | 61A | 商品組合 | eep_bmd → eep_bmh, 系統別 → eep_bmh | bmno, 系統別代號 |
 | 62J | 一盤領用 | eep_tod → eep_toh | tono |
 | 62K | 一盤繳庫 | eep_trd → eep_trh, eep_plant → eep_comp | trno, compno |
