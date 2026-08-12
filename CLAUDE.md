@@ -112,6 +112,14 @@ Every `eep_*` table includes:
 | `mes_mmbe3` | wareno | (itemno, wareno) |
 | `mes_mmbe4` | posino | (itemno, posino) |
 
+**mes_level（階層組合完整性）**
+
+`tr_mes_itio_level` (AFTER INSERT, UPDATE, DELETE) 獨立於 `tr_mes_itio_sync`，負責維護 `mes_level` 表，確保所有出現在 `mes_itio` 中的 `(compno, plantno, wareno, posino)` 組合都存在於 `mes_level`。INSERT 時新增缺少的組合，DELETE 時移除已無對應資料的組合。
+
+| 表 | PK |
+|----|-----|
+| `mes_level` | (compno, plantno, wareno, posino) |
+
 **階層解析規則：**
 - `posino`：若來源無 posino，以 wareno 代入
 - `plantno`：優先用來源表的 plantno → eep_ware.plantno → wareno
@@ -135,6 +143,7 @@ Every `eep_*` table includes:
 | `eep_trh` | `tr_010_62k_00_timer_eep` | UPDATE | → timer_eep |
 | `pos_tod` | `tr_011_pos_tod_mes_itio` | UPDATE,DELETE | → mes_itio |
 | `mes_itio` | `tr_mes_itio_sync` | INSERT,UPDATE,DELETE | → sp_recalc_itea → sp_recalc_mmbe |
+| `mes_itio` | `tr_mes_itio_level` | INSERT,UPDATE,DELETE | → mes_level 完整性維護 |
 
 ### Contract Change Pattern (e0_主約變更/)
 

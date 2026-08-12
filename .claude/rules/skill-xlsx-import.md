@@ -288,13 +288,15 @@ xlsx 檔名：xxx.xlsx
     → tr_mes_itio_sync (AFTER INSERT,UPDATE,DELETE)
     → sp_recalc_itea (重算 mes_itea1~4 每日彙總)
     → sp_recalc_mmbe (取最後異動日寫入 mes_mmbe1~4 即時快照)
+    → tr_mes_itio_level (AFTER INSERT,UPDATE,DELETE)
+    → mes_level (階層組合完整性維護)
 ```
 
 ### 部署順序
 
-1. 表：`mes_itio` → `mes_itea1~4` → `mes_mmbe1~4`
+1. 表：`mes_itio` → `mes_itea1~4` → `mes_mmbe1~4` → `mes_level`
 2. SP：`sp_recalc_mmbe` → `sp_recalc_itea`（itea 呼叫 mmbe）
-3. Trigger：`tr_mes_itio_sync` → `tr_011_eep_trd_mes_itio` 等
+3. Trigger：`tr_mes_itio_sync` → `tr_mes_itio_level` → `tr_011_eep_trd_mes_itio` 等
 
 ### 完整物件清單（已部署至 163.17.141.61:8081）
 
@@ -305,7 +307,9 @@ xlsx 檔名：xxx.xlsx
 | `mes_mmbe1~4` | Table | — | `claude/wms/4_資料庫物件/tb_mes_mmbe*.sql` |
 | `sp_recalc_itea` | SP | — | `claude/wms/4_資料庫物件/sp_recalc_itea.sql` |
 | `sp_recalc_mmbe` | SP | — | `claude/wms/4_資料庫物件/sp_recalc_mmbe.sql` |
+| `mes_level` | Table | — | `claude/wms/4_資料庫物件/tb_mes_level.sql` |
 | `tr_mes_itio_sync` | Trigger | `mes_itio` | `claude/wms/4_資料庫物件/tr_mes_itio_sync.sql` |
+| `tr_mes_itio_level` | Trigger | `mes_itio` | `claude/mes_level_完整性/tr_mes_itio_level.sql` |
 | `tr_011_eep_trd_mes_itio` | Trigger | `eep_trd` | `claude/wms/4_資料庫物件/tr_011_eep_trd_mes_itio.sql` |
 | `tr_011_eep_tod_mes_itio` | Trigger | `eep_tod` | `claude/wms/4_資料庫物件/tr_011_eep_tod_mes_itio.sql` |
 | `tr_011_eep_tdd_mes_itio` | Trigger | `eep_tdd` | `claude/wms/4_資料庫物件/tr_011_eep_tdd_mes_itio.sql` |
