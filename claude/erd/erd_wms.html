@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACPAY 庫存管理系統 ERD</title>
+<style>
+  :root {
+    --color-org: #3b82f6;
+    --color-org-bg: #eff6ff;
+    --color-master: #f59e0b;
+    --color-master-bg: #fffbeb;
+    --color-txn: #10b981;
+    --color-txn-bg: #ecfdf5;
+    --color-track: #8b5cf6;
+    --color-track-bg: #f5f3ff;
+    --bg: #f8fafc;
+    --card-shadow: 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    background: var(--bg);
+    color: #1e293b;
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+    color: #fff;
+    padding: 24px 32px;
+  }
+  header h1 { font-size: 1.6rem; font-weight: 700; }
+  header p { font-size: .9rem; opacity: .85; margin-top: 4px; }
+  .legend {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    padding: 16px 32px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: .85rem;
+  }
+  .legend-dot {
+    width: 14px; height: 14px; border-radius: 3px;
+  }
+  /* ── ERD Canvas ─────────────────── */
+  .erd-wrapper {
+    overflow: auto;
+    padding: 24px;
+    background: #fff;
+    position: relative;
+  }
+  .erd-canvas {
+    position: relative;
+    width: 1500px;
+    height: 980px;
+    margin: 0 auto;
+  }
+  .tbl-card {
+    position: absolute;
+    min-width: 220px;
+    border-radius: 6px;
+    box-shadow: var(--card-shadow);
+    background: #fff;
+    overflow: hidden;
+    transition: box-shadow .2s;
+    z-index: 2;
+  }
+  .tbl-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.18); z-index: 3; }
+  .tbl-card .hdr {
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: .85rem;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tbl-card .hdr .zh { font-weight: 400; font-size: .78rem; opacity: .9; }
+  .tbl-card .cols { font-size: .78rem; }
+  .tbl-card .cols .row {
+    display: flex; align-items: center;
+    padding: 3px 12px;
+    border-top: 1px solid #f1f5f9;
+    gap: 6px;
+  }
+  .tbl-card .cols .row:hover { background: #f8fafc; }
+  .tbl-card .cols .badge {
+    font-size: .65rem; font-weight: 700;
+    padding: 1px 4px; border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .badge-pk { background: #fef3c7; color: #92400e; }
+  .badge-fk { background: #dbeafe; color: #1e40af; }
+  .badge-id { background: #e2e8f0; color: #475569; }
+  .col-name { font-weight: 600; min-width: 70px; }
+  .col-type { color: #64748b; font-size: .72rem; }
+  .col-desc { color: #94a3b8; font-size: .72rem; margin-left: auto; }
+
+  .hdr-org  { background: var(--color-org); }
+  .hdr-master { background: var(--color-master); }
+  .hdr-txn  { background: var(--color-txn); }
+  .hdr-track { background: var(--color-track); }
+
+  /* ── SVG Lines ─────────────────── */
+  .erd-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .rel-line {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 1.5;
+    marker-end: url(#arrow);
+  }
+  .rel-line.highlight {
+    stroke: #3b82f6;
+    stroke-width: 2.5;
+  }
+  .rel-label {
+    font-size: 11px;
+    fill: #64748b;
+    pointer-events: none;
+  }
+
+  /* ── Detail Section ────────────── */
+  .detail-section {
+    padding: 32px;
+  }
+  .detail-section h2 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 20px;
+  }
+  .detail-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .detail-card .d-hdr {
+    padding: 10px 16px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+  }
+  .detail-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+  }
+  .detail-card th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 6px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .detail-card td {
+    padding: 4px 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .detail-card tr:hover td { background: #f8fafc; }
+  .pk-row td { background: #fffbeb; }
+  .fk-row td { background: #eff6ff; }
+
+  /* ── Relationship Table ────────── */
+  .rel-section {
+    padding: 0 32px 32px;
+  }
+  .rel-section h2 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .rel-table {
+    width: 100%;
+    max-width: 900px;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .rel-table th {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 8px 14px;
+    text-align: left;
+  }
+  .rel-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .rel-table tr:hover td { background: #f1f5f9; }
+  .rel-table code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: .8rem;
+  }
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: #94a3b8;
+    font-size: .8rem;
+    border-top: 1px solid #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ACPAY 庫存管理系統 — Entity Relationship Diagram</h1>
+  <p>資料庫: acpay @ 163.17.141.61:8081 &nbsp;|&nbsp; 產生日期: 2026-08-12 &nbsp;|&nbsp; 共 13 張資料表</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--color-org)"></div>組織階層 (Organization)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--color-master)"></div>主檔 (Master Data)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--color-txn)"></div>庫存交易 (Transactions)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--color-track)"></div>庫存追蹤 (Tracking)</div>
+  <div class="legend-item"><span class="badge badge-pk">PK</span> Primary Key</div>
+  <div class="legend-item"><span class="badge badge-fk">FK</span> Foreign Key</div>
+  <div class="legend-item"><span class="badge badge-id">ID</span> Identity</div>
+</div>
+
+<!-- ════════ ERD DIAGRAM ════════ -->
+<div class="erd-wrapper">
+<div class="erd-canvas" id="canvas">
+
+  <svg class="erd-svg" id="svg-lines">
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/>
+      </marker>
+      <marker id="arrow-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#3b82f6"/>
+      </marker>
+      <marker id="diamond" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+        <polygon points="5,0 10,5 5,10 0,5" fill="#94a3b8" stroke="#94a3b8" stroke-width="1"/>
+      </marker>
+    </defs>
+  </svg>
+
+  <!-- ── 組織階層 ── -->
+  <div class="tbl-card" id="tbl-eep_comp" style="left:30px; top:30px; width:230px;">
+    <div class="hdr hdr-org">eep_comp <span class="zh">公司</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">compno</span><span class="col-type">nvarchar(96)</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">compnm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">公司名稱</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_plant" style="left:30px; top:190px; width:240px;">
+    <div class="hdr hdr-org">eep_plant <span class="zh">工廠</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">plantno</span><span class="col-type">char(8)</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">plantnm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">工廠名稱</span></div>
+      <div class="row"><span class="badge badge-fk">FK</span><span class="col-name">compno</span><span class="col-type">nvarchar(96)</span><span class="col-desc">→ eep_comp</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">compnm</span><span class="col-type">nvarchar(96)</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_ware" style="left:30px; top:410px; width:240px;">
+    <div class="hdr hdr-org">eep_ware <span class="zh">倉庫</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">wareno</span><span class="col-type">char(8)</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">warenm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">倉庫名稱</span></div>
+      <div class="row"><span class="badge badge-fk">FK</span><span class="col-name">plantno</span><span class="col-type">char(8)</span><span class="col-desc">→ eep_plant</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">plantnm</span><span class="col-type">nvarchar(96)</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_posi" style="left:30px; top:640px; width:240px;">
+    <div class="hdr hdr-org">eep_posi <span class="zh">儲位</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">wareno</span><span class="col-type">char(8)</span><span class="col-desc">FK → eep_ware</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">posino</span><span class="col-type">char(8)</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">posinm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">儲位名稱</span></div>
+    </div>
+  </div>
+
+  <!-- ── 主檔 ── -->
+  <div class="tbl-card" id="tbl-eep_item" style="left:370px; top:30px; width:250px;">
+    <div class="hdr hdr-master">eep_item <span class="zh">物料主檔</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">itemno</span><span class="col-type">char(20)</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemnm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">品名</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemna</span><span class="col-type">nvarchar(96)</span><span class="col-desc">簡稱</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">specnm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">規格</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">unitno</span><span class="col-type">char(8)</span><span class="col-desc">單位</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">clasno</span><span class="col-type">char(8)</span><span class="col-desc">大類代碼</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">clasnm</span><span class="col-type">nvarchar(96)</span><span class="col-desc">大類名稱</span></div>
+    </div>
+  </div>
+
+  <!-- ── 庫存追蹤 ── -->
+  <div class="tbl-card" id="tbl-eep_itio" style="left:370px; top:310px; width:250px;">
+    <div class="hdr hdr-track">eep_itio <span class="zh">庫存異動(舊)</span></div>
+    <div class="cols">
+      <div class="row"><span class="col-name" style="margin-left:28px">fiels</span><span class="col-type">varchar(3)</span><span class="col-desc">欄位</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tono</span><span class="col-type">char(10)</span><span class="col-desc">單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">toseq</span><span class="col-type">char(20)</span><span class="col-desc">序號</span></div>
+      <div class="row"><span class="badge badge-fk">FK</span><span class="col-name">itemno</span><span class="col-type">nvarchar(20)</span><span class="col-desc">→ eep_item</span></div>
+      <div class="row"><span class="badge badge-fk">FK</span><span class="col-name">wareno</span><span class="col-type">char(8)</span><span class="col-desc">→ eep_ware</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">toqty</span><span class="col-type">int</span><span class="col-desc">數量</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">iodate</span><span class="col-type">char(8)</span><span class="col-desc">異動日期</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-mes_itio" style="left:370px; top:590px; width:260px;">
+    <div class="hdr hdr-track">mes_itio <span class="zh">庫存異動明細(新)</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">iono</span><span class="col-type">nvarchar(20)</span><span class="col-desc">來源單號</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">ioseq</span><span class="col-type">char(4)</span><span class="col-desc">來源序號</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">ioseqseq</span><span class="col-type">char(4)</span><span class="col-desc">來源類型</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">iodate</span><span class="col-type">char(8)</span><span class="col-desc">異動日期</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemno</span><span class="col-type">nvarchar(40)</span><span class="col-desc">物料編號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">posino</span><span class="col-type">nvarchar(40)</span><span class="col-desc">儲位</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">wareno</span><span class="col-type">nvarchar(40)</span><span class="col-desc">倉庫</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">plantno</span><span class="col-type">nvarchar(40)</span><span class="col-desc">工廠</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">compno</span><span class="col-type">nvarchar(40)</span><span class="col-desc">公司</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">ioqty</span><span class="col-type">decimal(20,2)</span><span class="col-desc">數量(+入/-出)</span></div>
+    </div>
+  </div>
+
+  <!-- ── 繳庫(入庫) ── -->
+  <div class="tbl-card" id="tbl-eep_trh" style="left:720px; top:30px; width:230px;">
+    <div class="hdr hdr-txn">eep_trh <span class="zh">繳庫單頭</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">trno</span><span class="col-type">char(10)</span><span class="col-desc">繳庫單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">trtype</span><span class="col-type">char(20)</span><span class="col-desc">類型</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">trdate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">trno2</span><span class="col-type">nvarchar(30)</span><span class="col-desc">來源單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">emplnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">經辦人</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_trd" style="left:720px; top:280px; width:250px;">
+    <div class="hdr hdr-txn">eep_trd <span class="zh">繳庫明細</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">trno</span><span class="col-type">char(10)</span><span class="col-desc">FK → eep_trh</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">trseq</span><span class="col-type">char(20)</span><span class="col-desc">序號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemno</span><span class="col-type">nvarchar(20)</span><span class="col-desc">物料編號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">品名</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">wareno</span><span class="col-type">char(8)</span><span class="col-desc">倉庫</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">trqty</span><span class="col-type">int</span><span class="col-desc">數量</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">trdate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+    </div>
+  </div>
+
+  <!-- ── 領用(出庫) ── -->
+  <div class="tbl-card" id="tbl-eep_toh" style="left:1020px; top:30px; width:230px;">
+    <div class="hdr hdr-txn">eep_toh <span class="zh">領用單頭</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">tono</span><span class="col-type">char(10)</span><span class="col-desc">領用單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">totype</span><span class="col-type">char(20)</span><span class="col-desc">類型</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">todate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tono2</span><span class="col-type">nvarchar(30)</span><span class="col-desc">來源單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">emplnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">經辦人</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_tod" style="left:1020px; top:280px; width:250px;">
+    <div class="hdr hdr-txn">eep_tod <span class="zh">領用明細</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">tono</span><span class="col-type">char(10)</span><span class="col-desc">FK → eep_toh</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">toseq</span><span class="col-type">char(20)</span><span class="col-desc">序號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemno</span><span class="col-type">nvarchar(20)</span><span class="col-desc">物料編號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">品名</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">wareno</span><span class="col-type">char(8)</span><span class="col-desc">倉庫</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">toqty</span><span class="col-type">int</span><span class="col-desc">數量</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">todate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">toamt</span><span class="col-type">decimal</span><span class="col-desc">金額</span></div>
+    </div>
+  </div>
+
+  <!-- ── 調撥 ── -->
+  <div class="tbl-card" id="tbl-eep_tdh" style="left:1300px; top:30px; width:230px;">
+    <div class="hdr hdr-txn">eep_tdh <span class="zh">調撥單頭</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-id">ID</span><span class="col-name">num</span><span class="col-type">bigint</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">tdno</span><span class="col-type">char(10)</span><span class="col-desc">調撥單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tdtype</span><span class="col-type">char(20)</span><span class="col-desc">類型</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tddate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tdno2</span><span class="col-type">nvarchar(30)</span><span class="col-desc">來源單號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">emplnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">經辦人</span></div>
+    </div>
+  </div>
+
+  <div class="tbl-card" id="tbl-eep_tdd" style="left:1300px; top:280px; width:260px;">
+    <div class="hdr hdr-txn">eep_tdd <span class="zh">調撥明細</span></div>
+    <div class="cols">
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">tdno</span><span class="col-type">char(10)</span><span class="col-desc">FK → eep_tdh</span></div>
+      <div class="row"><span class="badge badge-pk">PK</span><span class="col-name">tdseq</span><span class="col-type">char(20)</span><span class="col-desc">序號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemno</span><span class="col-type">nvarchar(20)</span><span class="col-desc">物料編號</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">itemnm</span><span class="col-type">nvarchar(50)</span><span class="col-desc">品名</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">warenofm</span><span class="col-type">char(8)</span><span class="col-desc">來源倉庫</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">warenoto</span><span class="col-type">char(8)</span><span class="col-desc">目的倉庫</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tdqty</span><span class="col-type">int</span><span class="col-desc">數量</span></div>
+      <div class="row"><span class="col-name" style="margin-left:28px">tddate</span><span class="col-type">datetime</span><span class="col-desc">日期</span></div>
+    </div>
+  </div>
+
+</div><!-- /erd-canvas -->
+</div><!-- /erd-wrapper -->
+
+<!-- ════════ RELATIONSHIPS ════════ -->
+<div class="rel-section">
+  <h2>Relationships (關聯定義)</h2>
+  <table class="rel-table">
+    <thead>
+      <tr><th>子表 (Child)</th><th>FK 欄位</th><th>父表 (Parent)</th><th>PK 欄位</th><th>關係</th><th>說明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>eep_plant</code></td><td>compno</td><td><code>eep_comp</code></td><td>compno</td><td>N:1</td><td>工廠隸屬公司</td></tr>
+      <tr><td><code>eep_ware</code></td><td>plantno</td><td><code>eep_plant</code></td><td>plantno</td><td>N:1</td><td>倉庫隸屬工廠</td></tr>
+      <tr><td><code>eep_posi</code></td><td>wareno</td><td><code>eep_ware</code></td><td>wareno</td><td>N:1</td><td>儲位隸屬倉庫</td></tr>
+      <tr><td><code>eep_trd</code></td><td>trno</td><td><code>eep_trh</code></td><td>trno</td><td>N:1</td><td>繳庫明細 → 繳庫單頭</td></tr>
+      <tr><td><code>eep_tod</code></td><td>tono</td><td><code>eep_toh</code></td><td>tono</td><td>N:1</td><td>領用明細 → 領用單頭</td></tr>
+      <tr><td><code>eep_tdd</code></td><td>tdno</td><td><code>eep_tdh</code></td><td>tdno</td><td>N:1</td><td>調撥明細 → 調撥單頭</td></tr>
+      <tr><td><code>eep_itio</code></td><td>itemno</td><td><code>eep_item</code></td><td>itemno</td><td>N:1</td><td>庫存異動 → 物料主檔</td></tr>
+      <tr><td><code>eep_itio</code></td><td>wareno</td><td><code>eep_ware</code></td><td>wareno</td><td>N:1</td><td>庫存異動 → 倉庫</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ════════ DETAIL CARDS ════════ -->
+<div class="detail-section">
+  <h2>Table Details (完整欄位清單)</h2>
+  <div class="detail-grid">
+
+    <!-- eep_comp -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-org">eep_comp — 公司代碼</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>compno</td><td>nvarchar(96)</td><td>NO</td><td>公司代碼</td></tr>
+          <tr><td></td><td>compnm</td><td>nvarchar(96)</td><td>YES</td><td>公司名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_plant -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-org">eep_plant — 工廠</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>plantno</td><td>char(8)</td><td>NO</td><td>工廠代碼</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(96)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr class="fk-row"><td><span class="badge badge-fk">FK</span></td><td>compno</td><td>nvarchar(96)</td><td>NO</td><td>→ eep_comp.compno</td></tr>
+          <tr><td></td><td>compnm</td><td>nvarchar(96)</td><td>YES</td><td>公司名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_ware -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-org">eep_ware — 倉庫代碼</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>wareno</td><td>char(8)</td><td>NO</td><td>倉庫代碼</td></tr>
+          <tr><td></td><td>warenm</td><td>nvarchar(96)</td><td>YES</td><td>倉庫名稱</td></tr>
+          <tr class="fk-row"><td><span class="badge badge-fk">FK</span></td><td>plantno</td><td>char(8)</td><td>YES</td><td>→ eep_plant.plantno</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(96)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr><td></td><td>swtc01</td><td>nvarchar(20)</td><td>YES</td><td>開關01</td></tr>
+          <tr><td></td><td>swtc02</td><td>nvarchar(20)</td><td>YES</td><td>開關02</td></tr>
+          <tr><td></td><td>swtc03</td><td>nvarchar(20)</td><td>YES</td><td>開關03</td></tr>
+          <tr><td></td><td>swtc04</td><td>nvarchar(20)</td><td>YES</td><td>開關04</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_posi -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-org">eep_posi — 儲位</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>wareno</td><td>char(8)</td><td>NO</td><td>FK → eep_ware.wareno</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>posino</td><td>char(8)</td><td>NO</td><td>儲位代碼</td></tr>
+          <tr><td></td><td>posinm</td><td>nvarchar(96)</td><td>YES</td><td>儲位名稱</td></tr>
+          <tr><td></td><td>warenm</td><td>nvarchar(96)</td><td>YES</td><td>倉庫名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_item -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-master">eep_item — 物料主檔</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>itemno</td><td>char(20)</td><td>NO</td><td>物料編號</td></tr>
+          <tr><td></td><td>itemnm</td><td>nvarchar(96)</td><td>YES</td><td>品名</td></tr>
+          <tr><td></td><td>specnm</td><td>nvarchar(96)</td><td>YES</td><td>規格</td></tr>
+          <tr><td></td><td>unitno</td><td>char(8)</td><td>YES</td><td>單位</td></tr>
+          <tr><td></td><td>clasno</td><td>char(8)</td><td>YES</td><td>大類代碼</td></tr>
+          <tr><td></td><td>clasnm</td><td>nvarchar(96)</td><td>YES</td><td>大類名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+          <tr><td></td><td>itemna</td><td>nvarchar(96)</td><td>YES</td><td>簡稱</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_itio -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-track">eep_itio — 庫存異動(舊)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td></td><td>fiels</td><td>varchar(3)</td><td>NO</td><td>欄位標記</td></tr>
+          <tr><td></td><td>tono</td><td>char(10)</td><td>NO</td><td>單號</td></tr>
+          <tr><td></td><td>toseq</td><td>char(20)</td><td>NO</td><td>序號</td></tr>
+          <tr class="fk-row"><td><span class="badge badge-fk">FK</span></td><td>itemno</td><td>nvarchar(20)</td><td>YES</td><td>→ eep_item.itemno</td></tr>
+          <tr class="fk-row"><td><span class="badge badge-fk">FK</span></td><td>wareno</td><td>char(8)</td><td>YES</td><td>→ eep_ware.wareno</td></tr>
+          <tr><td></td><td>toqty</td><td>int</td><td>YES</td><td>數量</td></tr>
+          <tr><td></td><td>todate</td><td>datetime</td><td>YES</td><td>單據日期</td></tr>
+          <tr><td></td><td>iodate</td><td>char(8)</td><td>YES</td><td>異動日期</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- mes_itio -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-track">mes_itio — 庫存異動明細(新 WMS)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>iono</td><td>nvarchar(20)</td><td>NO</td><td>來源單號</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>ioseq</td><td>char(4)</td><td>NO</td><td>來源序號</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>ioseqseq</td><td>char(4)</td><td>NO</td><td>TRD/TOD/TDDO/TDDI</td></tr>
+          <tr><td></td><td>iodate</td><td>char(8)</td><td>NO</td><td>YYYYMMDD</td></tr>
+          <tr><td></td><td>itemno</td><td>nvarchar(40)</td><td>NO</td><td>物料編號</td></tr>
+          <tr><td></td><td>posino</td><td>nvarchar(40)</td><td>NO</td><td>儲位(無則=wareno)</td></tr>
+          <tr><td></td><td>wareno</td><td>nvarchar(40)</td><td>YES</td><td>倉庫</td></tr>
+          <tr><td></td><td>plantno</td><td>nvarchar(40)</td><td>YES</td><td>工廠</td></tr>
+          <tr><td></td><td>compno</td><td>nvarchar(40)</td><td>YES</td><td>公司</td></tr>
+          <tr><td></td><td>ioqty</td><td>decimal(20,2)</td><td>NO</td><td>數量(+入庫/-出庫)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_trh -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_trh — 繳庫單頭(入庫)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>trno</td><td>char(10)</td><td>NO</td><td>繳庫單號</td></tr>
+          <tr><td></td><td>trtype</td><td>char(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>trno2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>trdate</td><td>datetime</td><td>NO</td><td>繳庫日期</td></tr>
+          <tr><td></td><td>zoomno</td><td>nvarchar(20)</td><td>YES</td><td>放大編號</td></tr>
+          <tr><td></td><td>emplno</td><td>nvarchar(20)</td><td>YES</td><td>經辦人代碼</td></tr>
+          <tr><td></td><td>emplnm</td><td>nvarchar(50)</td><td>YES</td><td>經辦人姓名</td></tr>
+          <tr><td></td><td>plantno</td><td>nvarchar(20)</td><td>YES</td><td>工廠代碼</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(50)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi</td><td>nvarchar(99)</td><td>YES</td><td>建檔資訊</td></tr>
+          <tr><td></td><td>chjernou</td><td>nvarchar(99)</td><td>YES</td><td>修改資訊</td></tr>
+          <tr><td></td><td>chjernoc</td><td>nvarchar(99)</td><td>YES</td><td>結案</td></tr>
+          <tr><td></td><td>chjernop</td><td>nvarchar(99)</td><td>YES</td><td>過帳</td></tr>
+          <tr><td></td><td>chjernov</td><td>nvarchar(99)</td><td>YES</td><td>作廢</td></tr>
+          <tr><td></td><td>chjernoz</td><td>nvarchar(99)</td><td>YES</td><td>核准</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_trd -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_trd — 繳庫明細(入庫)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>trno</td><td>char(10)</td><td>NO</td><td>FK → eep_trh.trno</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>trseq</td><td>char(20)</td><td>NO</td><td>序號</td></tr>
+          <tr><td></td><td>itemno</td><td>nvarchar(20)</td><td>YES</td><td>物料編號</td></tr>
+          <tr><td></td><td>itemnm</td><td>nvarchar(50)</td><td>YES</td><td>品名</td></tr>
+          <tr><td></td><td>specnm</td><td>nvarchar(50)</td><td>YES</td><td>規格</td></tr>
+          <tr><td></td><td>itemna</td><td>nvarchar(50)</td><td>YES</td><td>簡稱</td></tr>
+          <tr><td></td><td>clasno</td><td>nvarchar(20)</td><td>YES</td><td>大類代碼</td></tr>
+          <tr><td></td><td>clasnm</td><td>nvarchar(20)</td><td>YES</td><td>大類名稱</td></tr>
+          <tr><td></td><td>unitno</td><td>char(4)</td><td>YES</td><td>單位</td></tr>
+          <tr><td></td><td>wareno</td><td>char(8)</td><td>YES</td><td>倉庫代碼</td></tr>
+          <tr><td></td><td>warenm</td><td>nvarchar(20)</td><td>YES</td><td>倉庫名稱</td></tr>
+          <tr><td></td><td>trqty</td><td>int</td><td>YES</td><td>數量</td></tr>
+          <tr><td></td><td>trtype</td><td>char(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>trno2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>trdate</td><td>datetime</td><td>YES</td><td>日期</td></tr>
+          <tr><td></td><td>zoomno</td><td>nvarchar(20)</td><td>YES</td><td>放大編號</td></tr>
+          <tr><td></td><td>emplno</td><td>nvarchar(20)</td><td>YES</td><td>經辦人代碼</td></tr>
+          <tr><td></td><td>emplnm</td><td>nvarchar(50)</td><td>YES</td><td>經辦人姓名</td></tr>
+          <tr><td></td><td>plantno</td><td>nvarchar(20)</td><td>YES</td><td>工廠代碼</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(50)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi~z</td><td>nvarchar(99)</td><td>YES</td><td>稽核欄位 x6</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_toh -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_toh — 領用單頭(出庫)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>tono</td><td>char(10)</td><td>NO</td><td>領用單號</td></tr>
+          <tr><td></td><td>totype</td><td>char(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>tono2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>todate</td><td>datetime</td><td>NO</td><td>領用日期</td></tr>
+          <tr><td></td><td>zoomno</td><td>nvarchar(20)</td><td>YES</td><td>放大編號</td></tr>
+          <tr><td></td><td>emplno</td><td>nvarchar(20)</td><td>YES</td><td>經辦人代碼</td></tr>
+          <tr><td></td><td>emplnm</td><td>nvarchar(50)</td><td>YES</td><td>經辦人姓名</td></tr>
+          <tr><td></td><td>plantno</td><td>nvarchar(20)</td><td>YES</td><td>工廠代碼</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(50)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi~z</td><td>nvarchar(99)</td><td>YES</td><td>稽核欄位 x6</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_tod -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_tod — 領用明細(出庫)</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>tono</td><td>char(10)</td><td>NO</td><td>FK → eep_toh.tono</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>toseq</td><td>char(20)</td><td>NO</td><td>序號</td></tr>
+          <tr><td></td><td>itemno</td><td>nvarchar(20)</td><td>YES</td><td>物料編號</td></tr>
+          <tr><td></td><td>itemnm</td><td>nvarchar(50)</td><td>YES</td><td>品名</td></tr>
+          <tr><td></td><td>specnm</td><td>nvarchar(50)</td><td>YES</td><td>規格</td></tr>
+          <tr><td></td><td>unitno</td><td>char(4)</td><td>YES</td><td>單位</td></tr>
+          <tr><td></td><td>wareno</td><td>char(8)</td><td>YES</td><td>倉庫代碼</td></tr>
+          <tr><td></td><td>warenm</td><td>nvarchar(20)</td><td>YES</td><td>倉庫名稱</td></tr>
+          <tr><td></td><td>toqty</td><td>int</td><td>YES</td><td>數量</td></tr>
+          <tr><td></td><td>totype</td><td>nvarchar(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>tono2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>todate</td><td>datetime</td><td>YES</td><td>日期</td></tr>
+          <tr><td></td><td>toamt</td><td>decimal</td><td>YES</td><td>金額</td></tr>
+          <tr><td></td><td>itemna</td><td>nvarchar(96)</td><td>YES</td><td>簡稱</td></tr>
+          <tr><td></td><td>clasno</td><td>nvarchar(20)</td><td>YES</td><td>大類代碼</td></tr>
+          <tr><td></td><td>clasnm</td><td>nvarchar(20)</td><td>YES</td><td>大類名稱</td></tr>
+          <tr><td></td><td>zoomno~plantnm</td><td>nvarchar</td><td>YES</td><td>經辦/工廠</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi~z</td><td>nvarchar(99)</td><td>YES</td><td>稽核欄位 x6</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_tdh -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_tdh — 調撥單頭</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>tdno</td><td>char(10)</td><td>NO</td><td>調撥單號</td></tr>
+          <tr><td></td><td>tdtype</td><td>char(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>tdno2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>tddate</td><td>datetime</td><td>NO</td><td>調撥日期</td></tr>
+          <tr><td></td><td>zoomno</td><td>nvarchar(20)</td><td>YES</td><td>放大編號</td></tr>
+          <tr><td></td><td>emplno</td><td>nvarchar(20)</td><td>YES</td><td>經辦人代碼</td></tr>
+          <tr><td></td><td>emplnm</td><td>nvarchar(50)</td><td>YES</td><td>經辦人姓名</td></tr>
+          <tr><td></td><td>plantno</td><td>nvarchar(20)</td><td>YES</td><td>工廠代碼</td></tr>
+          <tr><td></td><td>plantnm</td><td>nvarchar(50)</td><td>YES</td><td>工廠名稱</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi~z</td><td>nvarchar(99)</td><td>YES</td><td>稽核欄位 x6</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- eep_tdd -->
+    <div class="detail-card">
+      <div class="d-hdr hdr-txn">eep_tdd — 調撥明細</div>
+      <table>
+        <thead><tr><th></th><th>欄位</th><th>型態</th><th>Nullable</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr class="pk-row"><td><span class="badge badge-id">ID</span></td><td>num</td><td>bigint</td><td>NO</td><td>identity</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>tdno</td><td>char(10)</td><td>NO</td><td>FK → eep_tdh.tdno</td></tr>
+          <tr class="pk-row"><td><span class="badge badge-pk">PK</span></td><td>tdseq</td><td>char(20)</td><td>NO</td><td>序號</td></tr>
+          <tr><td></td><td>itemno</td><td>nvarchar(20)</td><td>YES</td><td>物料編號</td></tr>
+          <tr><td></td><td>itemnm</td><td>nvarchar(50)</td><td>YES</td><td>品名</td></tr>
+          <tr><td></td><td>specnm</td><td>nvarchar(50)</td><td>YES</td><td>規格</td></tr>
+          <tr><td></td><td>itemna</td><td>nvarchar(50)</td><td>YES</td><td>簡稱</td></tr>
+          <tr><td></td><td>unitno</td><td>char(4)</td><td>YES</td><td>單位</td></tr>
+          <tr><td></td><td>warenofm</td><td>char(8)</td><td>YES</td><td>來源倉庫代碼</td></tr>
+          <tr><td></td><td>warenmfm</td><td>nvarchar(20)</td><td>YES</td><td>來源倉庫名稱</td></tr>
+          <tr><td></td><td>warenoto</td><td>char(8)</td><td>YES</td><td>目的倉庫代碼</td></tr>
+          <tr><td></td><td>warenmto</td><td>nvarchar(20)</td><td>YES</td><td>目的倉庫名稱</td></tr>
+          <tr><td></td><td>tdqty</td><td>int</td><td>YES</td><td>數量</td></tr>
+          <tr><td></td><td>tdtype</td><td>char(20)</td><td>YES</td><td>類型</td></tr>
+          <tr><td></td><td>tdno2</td><td>nvarchar(30)</td><td>YES</td><td>來源單號</td></tr>
+          <tr><td></td><td>tddate</td><td>datetime</td><td>YES</td><td>日期</td></tr>
+          <tr><td></td><td>zoomno~plantnm</td><td>nvarchar</td><td>YES</td><td>經辦/工廠</td></tr>
+          <tr><td></td><td>flowflag</td><td>char(50)</td><td>YES</td><td>流程狀態</td></tr>
+          <tr><td></td><td>menuflag</td><td>char(20)</td><td>YES</td><td>選單識別</td></tr>
+          <tr><td></td><td>chjernoi~z</td><td>nvarchar(99)</td><td>YES</td><td>稽核欄位 x6</td></tr>
+          <tr><td></td><td>remark</td><td>nvarchar(96)</td><td>YES</td><td>備註</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  ACPAY 庫存管理系統 ERD &nbsp;|&nbsp; 資料庫: acpay @ 163.17.141.61:8081 &nbsp;|&nbsp; 產生日期: 2026-08-12
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const svg = document.getElementById('svg-lines');
+  const canvas = document.getElementById('canvas');
+
+  // Relationship definitions: [fromTableId, toTableId, label, fromSide, toSide]
+  // sides: 'bottom','top','right','left'
+  const rels = [
+    ['tbl-eep_comp',  'tbl-eep_plant', '1:N',  'bottom', 'top'],
+    ['tbl-eep_plant', 'tbl-eep_ware',  '1:N',  'bottom', 'top'],
+    ['tbl-eep_ware',  'tbl-eep_posi',  '1:N',  'bottom', 'top'],
+    ['tbl-eep_trh',   'tbl-eep_trd',   '1:N',  'bottom', 'top'],
+    ['tbl-eep_toh',   'tbl-eep_tod',   '1:N',  'bottom', 'top'],
+    ['tbl-eep_tdh',   'tbl-eep_tdd',   '1:N',  'bottom', 'top'],
+    ['tbl-eep_item',  'tbl-eep_itio',  '1:N',  'bottom', 'top'],
+    ['tbl-eep_ware',  'tbl-eep_itio',  '1:N',  'right',  'left'],
+  ];
+
+  function getAnchor(el, side) {
+    const r = el.getBoundingClientRect();
+    const cr = canvas.getBoundingClientRect();
+    const x = r.left - cr.left, y = r.top - cr.top;
+    const w = r.width, h = r.height;
+    switch (side) {
+      case 'top':    return { x: x + w/2, y: y };
+      case 'bottom': return { x: x + w/2, y: y + h };
+      case 'left':   return { x: x,       y: y + h/2 };
+      case 'right':  return { x: x + w,   y: y + h/2 };
+    }
+  }
+
+  function drawLine(from, to, label) {
+    const dx = to.x - from.x, dy = to.y - from.y;
+    // control points for smooth curve
+    let cx1, cy1, cx2, cy2;
+    if (Math.abs(dy) > Math.abs(dx)) {
+      cx1 = from.x; cy1 = from.y + dy * 0.4;
+      cx2 = to.x;   cy2 = to.y   - dy * 0.4;
+    } else {
+      cx1 = from.x + dx * 0.4; cy1 = from.y;
+      cx2 = to.x   - dx * 0.4; cy2 = to.y;
+    }
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${from.x},${from.y} C${cx1},${cy1} ${cx2},${cy2} ${to.x},${to.y}`);
+    path.setAttribute('class', 'rel-line');
+    svg.appendChild(path);
+
+    // diamond marker at parent side (from)
+    const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    diamond.setAttribute('cx', from.x);
+    diamond.setAttribute('cy', from.y);
+    diamond.setAttribute('r', '4');
+    diamond.setAttribute('fill', '#94a3b8');
+    svg.appendChild(diamond);
+
+    // crow's foot at child side (to) - three short lines
+    const len = 8, spread = 6;
+    const angle = Math.atan2(to.y - cy2, to.x - cx2);
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    // left foot
+    const lx = to.x - len * cos + spread * sin;
+    const ly = to.y - len * sin - spread * cos;
+    // right foot
+    const rx = to.x - len * cos - spread * sin;
+    const ry = to.y - len * sin + spread * cos;
+    const foot = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    foot.setAttribute('d', `M${lx},${ly} L${to.x},${to.y} L${rx},${ry}`);
+    foot.setAttribute('fill', 'none');
+    foot.setAttribute('stroke', '#94a3b8');
+    foot.setAttribute('stroke-width', '1.5');
+    svg.appendChild(foot);
+
+    // label
+    const mx = (from.x + to.x) / 2 + 8;
+    const my = (from.y + to.y) / 2 - 4;
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', mx);
+    text.setAttribute('y', my);
+    text.setAttribute('class', 'rel-label');
+    text.textContent = label;
+    svg.appendChild(text);
+  }
+
+  rels.forEach(([fromId, toId, label, fromSide, toSide]) => {
+    const fromEl = document.getElementById(fromId);
+    const toEl   = document.getElementById(toId);
+    if (!fromEl || !toEl) return;
+    const from = getAnchor(fromEl, fromSide);
+    const to   = getAnchor(toEl, toSide);
+    drawLine(from, to, label);
+  });
+
+  // Hover highlight
+  document.querySelectorAll('.tbl-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const id = card.id;
+      const related = new Set();
+      rels.forEach(([f, t]) => {
+        if (f === id) related.add(t);
+        if (t === id) related.add(f);
+      });
+      document.querySelectorAll('.tbl-card').forEach(c => {
+        if (c.id !== id && !related.has(c.id)) {
+          c.style.opacity = '0.35';
+        }
+      });
+    });
+    card.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.tbl-card').forEach(c => {
+        c.style.opacity = '1';
+      });
+    });
+  });
+});
+</script>
+
+</body>
+</html>

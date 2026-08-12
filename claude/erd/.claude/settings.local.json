@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__sqlserver-nutc__query",
+      "Bash(gh repo view:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)"
+    ]
+  }
+}
