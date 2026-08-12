@@ -1,77 +1,80 @@
-# SKILL.md — ERD HTML 產生標準作業流程
+# SKILL.md — ERD 關聯圖建置標準流程
 
 ## 適用場景
 
-使用者提供：
-- 目標資料庫連線資訊
-- 資料表清單及邏輯 FK 定義
-- 輸出格式 (HTML)
+從 TBLDEF + COLDEF 產生互動式 ERD HTML。
 
 ## 標準步驟
 
-### Step 1：查詢資料表 Schema
-
-使用 MCP 工具 `mcp__sqlserver-nutc__query` 查詢 `INFORMATION_SCHEMA.COLUMNS`：
+### Step 1：查詢 TBLDEF 關聯定義
 
 ```sql
-SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE,
-       COLUMNPROPERTY(OBJECT_ID(TABLE_NAME), COLUMN_NAME, 'IsIdentity') as IsIdentity
+-- MCP 查詢必須指定 db=acpay
+SELECT menunum, childTable, childTableDesc, childkeys,
+       hasparent, parentTable, parentTableDesc, parentkeys
+FROM TBLDEF ORDER BY menunum, num
+```
+
+### Step 2：查詢 COLDEF 中文欄位抬頭
+
+```sql
+SELECT TABLE_NAME, FIELD_NAME, CAPTION
+FROM COLDEF
+WHERE TABLE_NAME IN ('eep_trd','eep_trh',...)
+ORDER BY TABLE_NAME, SEQ
+```
+
+**注意：**
+- 單次查詢不可超過 ~10 張表，否則 MCP 回傳超限，分批查詢
+- eep_tod 有大小寫重複 (`eep_tod` + `eep_Tod`)，需手動合併
+- eep_toh 的 COLDEF 使用 tr* 欄位名 (trtype, trno2)，實際欄位為 to*
+
+### Step 3：補查無 COLDEF 資料的表
+
+```sql
+SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME IN ('表名清單')
+WHERE TABLE_NAME IN ('eep_dac','pos_tod')
 ORDER BY TABLE_NAME, ORDINAL_POSITION
 ```
 
-### Step 2：查詢 Primary Key
+對於中文欄位名的表 (eep_dac)，caption = 欄位名。
 
-```sql
-SELECT t.name AS TABLE_NAME, c.name AS COLUMN_NAME, ic.key_ordinal
-FROM sys.indexes i
-JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-JOIN sys.tables t ON i.object_id = t.object_id
-WHERE i.is_primary_key = 1 AND t.name IN ('表名清單')
-ORDER BY t.name, ic.key_ordinal
-```
+### Step 4：產生 HTML
 
-### Step 3：產生 HTML ERD
+架構：
+1. 左側導航欄：TBLDEF 的 distinct menunum
+2. 右側畫布：動態渲染 table card + SVG 關聯線
+3. 資料全部嵌入 JavaScript (TBLDEF array + COLDEF object)
 
-HTML 結構包含三個區塊：
+關鍵設計：
+- 審計欄位不顯示 (flowflag, menuflag, chjernoi~chjernoz)
+- FK 欄位金色標示 + 🔑 圖示
+- 卡片最多顯示 22 欄，超過顯示 "... 還有 N 個欄位"
+- 動態佈局：pure parent 左欄、middle 中欄、pure child 右欄
+- SVG Bezier + crow's foot 標記
 
-1. **ERD Canvas** — 使用絕對定位的 table card + SVG 關聯線
-   - 每張表一個 card，顯示 PK/FK 和關鍵業務欄位
-   - SVG overlay 繪製 Bezier curve 連接線 + crow's foot 標記
-   - 滑鼠 hover 時高亮相關表、淡化無關表
-   - 色彩分群：組織(藍)、主檔(橘)、交易(綠)、追蹤(紫)
+### Step 5：更新文件 + Git
 
-2. **Relationships Table** — 完整 FK 關聯定義，含子表/父表/說明
-
-3. **Detail Cards** — 每張表的完整欄位清單，標註 PK/FK/Identity
-
-### Step 4：JavaScript 互動
-
-- DOM loaded 後計算 card 位置，繪製 SVG 連接線
-- 連接線使用 Bezier curve，父端圓點、子端 crow's foot
-- Hover 時 opacity 淡化無關 card
-
-### Step 5：更新文件並推送
-
-1. 更新 `CLAUDE.md` — 記錄涵蓋的表、關聯定義
-2. 更新 `SKILL.md` — 記錄操作流程
-3. Git commit & push 至指定 GitHub repo
-
-## 版面配置建議
-
-```
-左側：組織階層 (comp → plant → ware → posi)，由上至下
-中央：主檔 + 追蹤 (item, itio, mes_itio)
-右側：交易 (trh→trd, toh→tod, tdh→tdd)，三組並排
+```bash
+# 更新 CLAUDE.md 和 SKILL.md
+# Commit
+git add claude/erd/erd_wms.html claude/erd/CLAUDE.md claude/erd/SKILL.md
+git commit -m "feat(erd): 更新 ERD 內容"
+# Push 到指定 remote
+git push gemio_wms_erd main
 ```
 
 ## 踩坑紀錄
 
 | 問題 | 解法 |
 |------|------|
-| eep_posi FK 定義寫 `compno` 但實際欄位是 `wareno` | 以實際 schema 為準，FK 改為 wareno → eep_ware.wareno |
-| eep_Tod 大小寫不一致 (SQL Server CI 定序) | 資料庫回傳 `eep_Tod`，HTML 中統一顯示為小寫 `eep_tod` |
-| `itemna` 欄名結尾有空白 | 8081 伺服器的 `itemna ` 含尾端空白，查詢時注意 |
-| SVG 線條被 card 遮擋 | SVG z-index: 1，card z-index: 2，hover 時 card 提升為 3 |
+| MCP 預設連 master DB | 查詢加 `db=acpay` 參數 |
+| COLDEF 查太多表回傳超限 | 分 2~3 批查詢，每批 6~8 張表 |
+| eep_tod COLDEF 大小寫重複 | 合併 eep_tod + eep_Tod，取中文 caption |
+| eep_toh 欄位名 tr* 非實際 | COLDEF 顯示用，實際 DB 欄位為 to* |
+| FK 鍵值為中文欄位名 | 匹配時同時比對 FIELD_NAME 和 CAPTION |
+| CAPTION 尾碼字母 (契約編號F) | 去尾碼字母後再匹配 FK |
+| A01 同一 FK 出現兩次 | 以 child→parent 為 key 去重 |
+| eep_dac/pos_tod 無 COLDEF | 用 INFORMATION_SCHEMA 補欄位 |
+| eep_menu.menunum 格式不同 | TBLDEF menunum (3碼) 與 eep_menu (長格式) 不匹配 |
