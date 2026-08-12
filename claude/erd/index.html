@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACPAY ERD — TBLDEF 資料表關聯圖</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+    background: #f0f2f5;
+    color: #1e293b;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  /* ── Sidebar ─────────────────── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    padding: 20px 16px 8px;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .sidebar h2 {
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    border-bottom: 1px solid #334155;
+    background: rgba(59,130,246,.15);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    font-size: .88rem;
+    gap: 10px;
+  }
+  .nav-item:hover {
+    background: rgba(255,255,255,.06);
+    border-left-color: #475569;
+  }
+  .nav-item.active {
+    background: rgba(59,130,246,.18);
+    border-left-color: #3b82f6;
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-code {
+    font-family: 'Consolas', monospace;
+    font-size: .8rem;
+    background: rgba(255,255,255,.08);
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 36px;
+    text-align: center;
+  }
+  .nav-item.active .nav-code {
+    background: rgba(59,130,246,.4);
+    color: #93c5fd;
+  }
+  .nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: .7rem;
+    background: rgba(255,255,255,.1);
+    padding: 1px 6px;
+    border-radius: 8px;
+    color: #94a3b8;
+  }
+  /* ── Main Area ─────────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    background: #fff;
+    padding: 12px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 52px;
+  }
+  .topbar h1 { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+  .topbar .sub { font-size: .85rem; color: #64748b; }
+  .canvas-wrap {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background:
+      radial-gradient(circle, #d1d5db 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .canvas {
+    position: relative;
+    min-width: 1000px;
+    min-height: 700px;
+  }
+  /* ── Table Cards ─────────────────── */
+  .card {
+    position: absolute;
+    width: 320px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.08);
+    background: #fff;
+    z-index: 2;
+    transition: box-shadow .2s;
+  }
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12);
+    z-index: 3;
+  }
+  .card-header {
+    padding: 8px 12px;
+    border-radius: 8px 8px 0 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-header .tbl-name {
+    font-family: 'Consolas', monospace;
+    font-size: .85rem;
+    font-weight: 700;
+  }
+  .card-header .tbl-desc {
+    font-size: .78rem;
+    opacity: .9;
+  }
+  .card-header .role-badge {
+    margin-left: auto;
+    font-size: .65rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.25);
+    font-weight: 600;
+  }
+  .card-body {
+    max-height: 460px;
+    overflow-y: auto;
+  }
+  .col-row {
+    display: flex;
+    padding: 3px 12px;
+    font-size: .78rem;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+  }
+  .col-row:nth-child(even) { background: #fafbfc; }
+  .col-row.fk-row {
+    background: #fef3c7 !important;
+    font-weight: 600;
+  }
+  .col-row .col-icon {
+    width: 16px;
+    text-align: center;
+    margin-right: 6px;
+    font-size: .7rem;
+  }
+  .col-row .col-field {
+    font-family: 'Consolas', monospace;
+    color: #475569;
+    width: 130px;
+    min-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .col-row.fk-row .col-field { color: #92400e; }
+  .col-row .col-caption {
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .col-row.fk-row .col-caption { color: #78350f; }
+  .card-footer {
+    padding: 4px 12px;
+    font-size: .72rem;
+    color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  /* ── SVG Lines ─────────────────── */
+  .rel-svg {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .rel-line {
+    fill: none;
+    stroke-width: 2;
+    pointer-events: stroke;
+    cursor: pointer;
+  }
+  .rel-line:hover { stroke-width: 3.5; }
+  .rel-label {
+    font-size: 11px;
+    font-family: 'Consolas', monospace;
+    pointer-events: none;
+  }
+  .crow-foot { fill: none; stroke-width: 2; }
+  /* ── Welcome ─────────────────── */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    gap: 12px;
+  }
+  .welcome .icon { font-size: 3rem; }
+  .welcome p { font-size: .95rem; }
+  /* ── Bottom Info ─────────────────── */
+  .info-bar {
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    padding: 8px 24px;
+    font-size: .78rem;
+    color: #64748b;
+    display: flex;
+    gap: 24px;
+  }
+  .info-bar strong { color: #475569; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <h2>ACPAY ERD</h2>
+  <div class="sidebar-title">功能模組</div>
+  <div id="navList"></div>
+</div>
+<div class="main">
+  <div class="topbar" id="topbar">
+    <h1>TBLDEF 資料表關聯圖</h1>
+    <span class="sub">選擇左側功能模組以查看 ERD</span>
+  </div>
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas" id="canvas">
+      <svg class="rel-svg" id="svgLayer"></svg>
+      <div class="welcome" id="welcome">
+        <div class="icon">&#9776;</div>
+        <p>請從左側選擇功能模組</p>
+      </div>
+    </div>
+  </div>
+  <div class="info-bar" id="infoBar">
+    <span>TBLDEF: <strong>22</strong> 筆關聯定義</span>
+    <span>涵蓋 <strong>31</strong> 張資料表</span>
+    <span>功能模組: <strong>16</strong> 組</span>
+    <span>資料來源: acpay @ 163.17.141.61:8081</span>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   DATA — TBLDEF relationships
+   ================================================================ */
+const TBLDEF = [
+  {mn:'62J',child:'eep_tod',  cdesc:'領料明細',ckeys:'tono',          parent:'eep_toh',  pdesc:'領料主檔',pkeys:'tono'},
+  {mn:'62K',child:'eep_trd',  cdesc:'繳庫明細',ckeys:'trno',          parent:'eep_trh',  pdesc:'繳庫主檔',pkeys:'trno'},
+  {mn:'62K',child:'eep_plant',cdesc:'工廠代碼',ckeys:'compno',        parent:'eep_comp', pdesc:'公司代碼',pkeys:'compno'},
+  {mn:'66D',child:'eep_tdd',  cdesc:'調撥明細',ckeys:'tdno',          parent:'eep_tdh',  pdesc:'調撥主檔',pkeys:'tdno'},
+  {mn:'67Q',child:'mes_itio', cdesc:'庫存異動',ckeys:'itemno',        parent:'eep_item', pdesc:'物料主檔',pkeys:'itemno'},
+  {mn:'67Q',child:'mes_itio', cdesc:'庫存異動',ckeys:'wareno',        parent:'eep_ware', pdesc:'倉庫代碼',pkeys:'wareno'},
+  {mn:'91H',child:'eep_numh', cdesc:'欄位名稱',ckeys:'menunum',      parent:'eep_menu', pdesc:'選單定義',pkeys:'menunum'},
+  {mn:'91I',child:'eep_num8', cdesc:'欄位內容',ckeys:'menunum,fieldno',parent:'eep_numh',pdesc:'欄位名稱',pkeys:'menunum,fieldno'},
+  {mn:'96A',child:'eep_ware', cdesc:'倉庫代碼',ckeys:'plantno',      parent:'eep_plant',pdesc:'工廠代碼',pkeys:'plantno'},
+  {mn:'96A',child:'eep_posi', cdesc:'儲位代碼',ckeys:'wareno',       parent:'eep_ware', pdesc:'倉庫代碼',pkeys:'wareno'},
+  {mn:'A01',child:'eep_iwd_10',cdesc:'服務內容',ckeys:'契約編號',     parent:'eep_iwh',  pdesc:'客服通知',pkeys:'契約編號'},
+  {mn:'A01',child:'eep_iwd_20',cdesc:'完工回報',ckeys:'契約編號',     parent:'eep_iwh',  pdesc:'客服通知',pkeys:'契約編號'},
+  {mn:'B01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_iwh',  pdesc:'外派工單',pkeys:'契約編號'},
+  {mn:'C01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_pos',  pdesc:'新案追蹤',pkeys:'契約編號'},
+  {mn:'D01',child:'eep_d01',  cdesc:'連鎖客戶',ckeys:'連鎖性客戶編號',parent:'pos',      pdesc:'新案追蹤',pkeys:'連鎖性客戶編號'},
+  {mn:'E01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'pos_log',  pdesc:'契約變更',pkeys:'契約編號'},
+  {mn:'F01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_dac',  pdesc:'解約建檔',pkeys:'契約編號'},
+  {mn:'61A',child:'eep_bmd', cdesc:'組合子檔',ckeys:'bmno',          parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'bmno'},
+  {mn:'61A',child:'系統別',   cdesc:'系統別',  ckeys:'系統別代號',    parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'系統別代號'},
+  {mn:'48E',child:'vw_POS_CRM_ACRTB',cdesc:'結帳單子',ckeys:'TB001,TB002',parent:'vw_POS_CRM_ACRTA',pdesc:'結帳單主',pkeys:'TA001,TA002'},
+  {mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'教款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'教款單主',pkeys:'TC001,TC002'}
+];
+
+/* ── Duplicate A01 row removed (eep_iwd_10 補充說明 is same FK as 服務內容) ── */
+
+/* ================================================================
+   DATA — Menu labels
+   ================================================================ */
+const MENU_LABELS = {
+  '48E':'結帳單','48F':'教款單','61A':'商品組合',
+  '62J':'一盤領用','62K':'一盤繳庫','66D':'庫存調撥','67Q':'庫存異動查詢',
+  '91H':'選單欄位定義','91I':'欄位片語內容','96A':'倉庫儲位設定',
+  'A01':'客服通知','B01':'外派工單','C01':'新案建檔',
+  'D01':'連鎖客戶','E01':'主約變更','F01':'解約建檔'
+};
+
+const MENU_ORDER = ['48E','48F','61A','62J','62K','66D','67Q','96A','A01','B01','C01','D01','E01','F01','91H','91I'];
+
+/* ================================================================
+   DATA — COLDEF columns per table (audit trail fields removed)
+   f = FIELD_NAME, c = CAPTION
+   ================================================================ */
+const COLDEF = {
+'eep_comp':[
+  {f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_plant':[
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_posi':[
+  {f:'posino',c:'儲位代碼'},{f:'posinm',c:'儲位名稱'},{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_ware':[
+  {f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'swtc01',c:'庫別性質'},{f:'swtc02',c:'納入可用'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_trh':[
+  {f:'trno',c:'單據編號'},{f:'trtype',c:'單據類別'},{f:'trno2',c:'相關編號'},{f:'trdate',c:'單據日期'},
+  {f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_trd':[
+  {f:'trno',c:'單據編號'},{f:'trseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},
+  {f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'單位'},
+  {f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'trqty',c:'數量'},
+  {f:'trtype',c:'單據類別'},{f:'trno2',c:'相關編號'},{f:'trdate',c:'單據日期'},
+  {f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_toh':[
+  {f:'tono',c:'單據編號'},{f:'totype',c:'通知類別'},{f:'tono2',c:'相關編號'},
+  {f:'trtype',c:'單據類別'},{f:'todate',c:'單據日期'},{f:'specnm',c:'物料規格'},
+  {f:'trno2',c:'相關單號'},{f:'itemna',c:'ERP編碼'},{f:'trdate',c:'異動日期'},
+  {f:'zoomno',c:'專案編號'},{f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},
+  {f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_tod':[
+  {f:'tono',c:'單據編號'},{f:'toseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},
+  {f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},
+  {f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},
+  {f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'toqty',c:'數量'},
+  {f:'totype',c:'單據類別'},{f:'tono2',c:'相關編號'},{f:'todate',c:'單據日期'},
+  {f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_tdh':[
+  {f:'tdno',c:'單據編號'},{f:'tdtype',c:'單據類別'},{f:'tdno2',c:'相關編號'},{f:'tddate',c:'單據日期'},
+  {f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_tdd':[
+  {f:'tdno',c:'單據編號'},{f:'tdseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},
+  {f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},
+  {f:'warenofm',c:'撥出倉庫'},{f:'warenmfm',c:'撥出倉名'},{f:'warenoto',c:'撥入倉庫'},{f:'warenmto',c:'撥入倉名'},
+  {f:'tdqty',c:'數量'},{f:'tdtype',c:'單據類別'},{f:'tdno2',c:'相關編號'},{f:'tddate',c:'單據日期'},
+  {f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}
+],
+'mes_itio':[
+  {f:'iono',c:'單據編號'},{f:'ioseq',c:'單據項次'},{f:'ioseqseq',c:'單據三階'},
+  {f:'iodate',c:'異動日期'},{f:'itemno',c:'物料編號'},{f:'posino',c:'儲位代碼'},
+  {f:'wareno',c:'倉庫代碼'},{f:'plantno',c:'工廠代碼'},{f:'compno',c:'公司代碼'},{f:'ioqty',c:'單據數量'}
+],
+'eep_item':[
+  {f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP料號'},
+  {f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},
+  {f:'remark',c:'備註說明'}
+],
+'eep_iwh':[
+  {f:'iwno',c:'通知編號'},{f:'iwtype',c:'通知類別'},{f:'address0',c:'客戶全名'},
+  {f:'客服類別',c:'客服類別'},{f:'需要派工',c:'需要派工'},{f:'attention',c:'來電人員'},
+  {f:'iwno2',c:'相關編號'},{f:'工單編號',c:'工單編號'},{f:'建案人員',c:'建案人員'},
+  {f:'iwdate',c:'通知日期'},{f:'zoomno',c:'契約編號'},{f:'客服人員',c:'客服人員'},
+  {f:'處理人員',c:'處理人員'},{f:'custno',c:'客戶代碼'},{f:'custnm',c:'客戶名稱'},
+  {f:'技術人員',c:'技術人員'},{f:'saleno',c:'業務代碼'},{f:'案件狀態',c:'案件狀態'},
+  {f:'結案方式',c:'結案方式'},{f:'salenm',c:'業務名稱'},{f:'案件分類',c:'案件分類'},
+  {f:'契約編號',c:'契約編號'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},
+  {f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'remark',c:'內容描述'}
+],
+'eep_iwd_10':[
+  {f:'iwno',c:'通知編號'},{f:'iwseq',c:'項次'},{f:'files',c:'檔案路徑'},{f:'remark2',c:'備註說明'}
+],
+'eep_iwd_20':[
+  {f:'iwno',c:'通知編號'},{f:'iwseq',c:'項次'},{f:'files1',c:'照片一'},{f:'files2',c:'照片二'},
+  {f:'files3',c:'照片三'},{f:'dtfm',c:'起始時間'},{f:'dtto',c:'終止時間'},{f:'hrs',c:'時數'},
+  {f:'remark',c:'備註說明'},{f:'signatures',c:'客戶簽名'}
+],
+'eep_menu':[
+  {f:'menunum',c:'選單代碼'},{f:'linknumber',c:'連結編號'},{f:'linkaction',c:'連結動作'},{f:'remark',c:'備註說明'}
+],
+'eep_numh':[
+  {f:'menunum',c:'選單代碼'},{f:'fieldno',c:'欄位名稱'},{f:'linknumber',c:'連結編號'},
+  {f:'linkaction',c:'連結動作'},{f:'remark',c:'備註說明'}
+],
+'eep_num8':[
+  {f:'menunum',c:'選單代碼'},{f:'num8no',c:'功能代碼'},{f:'fieldno',c:'欄位名稱'},
+  {f:'dddwno',c:'片語代碼'},{f:'dddwnm',c:'片語內容'},
+  {f:'linkaction',c:'連結動作'},{f:'linknumber',c:'連結編號'},{f:'remark',c:'備註說明'}
+],
+'eep_pos':[
+  {f:'契約編號',c:'契約編號'},{f:'來源契約編號',c:'來源契約編號'},{f:'正式契約編號',c:'正式契約編號'},
+  {f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'契約書客戶名稱'},
+  {f:'部門代碼',c:'部門代碼'},{f:'部門名稱',c:'部門名稱'},
+  {f:'公司代碼',c:'公司代碼'},{f:'公司名稱',c:'公司名稱'},
+  {f:'營業員編號',c:'營業員編號'},{f:'營業員名稱',c:'營業員名稱'},
+  {f:'標的物名稱',c:'標的物名稱'},{f:'標的物地址',c:'標的物地址'},
+  {f:'客戶統編',c:'客戶統編'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},
+  {f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'負責人',c:'負責人'},
+  {f:'拜訪連絡人',c:'拜訪連絡人'},{f:'remark',c:'備註說明'}
+],
+'pos':[
+  {f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'客戶名稱'},
+  {f:'部門代碼',c:'部門代碼'},{f:'部門名稱',c:'部門名稱'},
+  {f:'公司代碼',c:'公司代碼'},{f:'公司名稱',c:'分公司'},
+  {f:'營業員編號',c:'業務編號'},{f:'營業員名稱',c:'業務'},
+  {f:'成約日期',c:'成約日期'},{f:'開通日期',c:'開通日期'},
+  {f:'系統別',c:'系統別'},{f:'系統別名稱',c:'系統別名稱'},
+  {f:'標的物名稱',c:'標的物名稱'},{f:'標的物地址',c:'標地地址'},
+  {f:'客戶統編',c:'統一編號'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},
+  {f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'服務起日',c:'服務起日'},
+  {f:'服務迄日',c:'服務迄日'},{f:'備註',c:'備註'}
+],
+'pos_log':[
+  {f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'契約書客戶名稱'},
+  {f:'部門代碼',c:'部門代碼'},{f:'部門名稱',c:'部門名稱'},
+  {f:'公司代碼',c:'公司代碼'},{f:'公司名稱',c:'公司名稱'},
+  {f:'營業員編號',c:'營業員編號'},{f:'營業員名稱',c:'營業員名稱'},
+  {f:'成約日期',c:'成約日期'},{f:'開通日期',c:'開通日期'},
+  {f:'收款週期',c:'收款週期'},{f:'最後計費日',c:'最後計費日'},
+  {f:'標的物名稱',c:'標的物名稱'},{f:'標的物地址',c:'標的物地址'},
+  {f:'客戶統編',c:'客戶統編'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},
+  {f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'服務起日',c:'服務起日'},
+  {f:'服務迄日',c:'服務迄日'},{f:'remark',c:'備註說明'}
+],
+'eep_dac':[
+  {f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'契約書客戶名稱'},
+  {f:'部門代碼',c:'部門代碼'},{f:'部門名稱',c:'部門名稱'},
+  {f:'公司代碼',c:'公司代碼'},{f:'公司名稱',c:'公司名稱'},
+  {f:'營業員編號',c:'營業員編號'},{f:'營業員名稱',c:'營業員名稱'},
+  {f:'標的物名稱',c:'標的物名稱'},{f:'標的物地址',c:'標的物地址'},
+  {f:'客戶統編',c:'客戶統編'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},
+  {f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'解約日',c:'解約日'},
+  {f:'服務起日',c:'服務起日'},{f:'服務迄日',c:'服務迄日'},
+  {f:'需要派工',c:'需要派工'},{f:'處理人員',c:'處理人員'},{f:'工單編號',c:'工單編號'},
+  {f:'remark',c:'備註說明'}
+],
+'pos_tod':[
+  {f:'tono',c:'單據編號'},{f:'toseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},
+  {f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},
+  {f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},
+  {f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'toqty',c:'數量'},
+  {f:'totype',c:'單據類別'},{f:'tono2',c:'相關編號'},{f:'todate',c:'單據日期'},
+  {f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},
+  {f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'toamt',c:'金額'},
+  {f:'remark',c:'備註說明'}
+],
+'eep_d01':[
+  {f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_bmh':[
+  {f:'bmno',c:'組合代碼'},{f:'bmtype',c:'組合型態'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_bmd':[
+  {f:'bmno',c:'組合代碼'},{f:'bmseq',c:'項次'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},
+  {f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},
+  {f:'bmqty',c:'數量'},{f:'bmpri',c:'金額'},{f:'bmtype',c:'組合型態'},{f:'remark',c:'備註說明'}
+],
+'系統別':[
+  {f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'}
+],
+'vw_POS_CRM_ACRTA':[
+  {f:'TA001',c:'結帳單別'},{f:'TA002',c:'結帳單號'},{f:'TA003',c:'交易日期'},{f:'TA004',c:'客戶代號'},
+  {f:'TA005',c:'收款業務員'},{f:'TA006',c:'廠別'},{f:'TA007',c:'統一編號'},{f:'TA008',c:'銀行名稱'},
+  {f:'TA009',c:'幣別'},{f:'TA010',c:'匯率'},{f:'TA015',c:'發票號碼'},{f:'TA016',c:'發票日期'},
+  {f:'TA017',c:'發票貨款'},{f:'TA018',c:'發票稅額'},{f:'TA020',c:'預計收款日'},{f:'TA022',c:'備註'},
+  {f:'TA029',c:'應收金額'},{f:'TA030',c:'營業稅額'},{f:'TA031',c:'已收金額'},{f:'TA032',c:'沖款金額'},
+  {f:'TA033',c:'未收金額'},{f:'TA034',c:'折讓金額'}
+],
+'vw_POS_CRM_ACRTB':[
+  {f:'TB001',c:'結帳單別'},{f:'TB002',c:'結帳單號'},{f:'TB003',c:'序號'},{f:'TB004',c:'來源'},
+  {f:'TB005',c:'憑證單別'},{f:'TB006',c:'憑證單號'},{f:'TB007',c:'憑證序號'},{f:'TB008',c:'憑證日期'},
+  {f:'TB009',c:'應收金額'},{f:'TB010',c:'差額'},{f:'TB011',c:'備註'},{f:'TB013',c:'科目編號'},
+  {f:'TB017',c:'原幣未稅金額'},{f:'TB018',c:'原幣稅額'},{f:'TB019',c:'本幣未稅金額'},{f:'TB020',c:'本幣稅額'},
+  {f:'TB021',c:'部門別'},{f:'TB022',c:'專案代號'}
+],
+'vw_POS_CRM_ACRTC':[
+  {f:'TC001',c:'收款單別'},{f:'TC002',c:'收款單號'},{f:'TC003',c:'收款日期'},{f:'TC004',c:'客戶代號'},
+  {f:'TC005',c:'幣別'},{f:'TC007',c:'備註'},{f:'TC010',c:'廠別'},
+  {f:'TC011',c:'原幣借方金額'},{f:'TC012',c:'原幣貸方金額'},{f:'TC013',c:'本幣借方金額'},{f:'TC014',c:'本幣貸方金額'},
+  {f:'TC015',c:'收款業務員'},{f:'TC017',c:'單據日期'}
+],
+'vw_POS_CRM_ACRTD':[
+  {f:'TD001',c:'收款單別'},{f:'TD002',c:'收款單號'},{f:'TD003',c:'序號'},{f:'TD004',c:'借貸'},
+  {f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD008',c:'會計科目'},
+  {f:'TD009',c:'到期日'},{f:'TD010',c:'幣別'},{f:'TD011',c:'匯率'},{f:'TD012',c:'立帳金額'},
+  {f:'TD013',c:'立帳餘額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'},{f:'TD017',c:'備註'}
+]
+};
+
+/* ================================================================
+   DATA — Color palette for parent/child cards
+   ================================================================ */
+const PARENT_COLOR = '#2563eb';
+const CHILD_COLOR  = '#059669';
+const MIDDLE_COLOR = '#7c3aed';
+const LINE_COLORS = ['#6366f1','#2563eb','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#be185d'];
+
+/* ================================================================
+   RENDERING LOGIC
+   ================================================================ */
+let currentMenu = null;
+
+function init() {
+  // Build sidebar navigation
+  const navList = document.getElementById('navList');
+  MENU_ORDER.forEach(mn => {
+    const rels = TBLDEF.filter(r => r.mn === mn);
+    const tables = new Set();
+    rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
+    const div = document.createElement('div');
+    div.className = 'nav-item';
+    div.dataset.mn = mn;
+    div.innerHTML = `<span class="nav-code">${mn}</span><span class="nav-label">${MENU_LABELS[mn]||mn}</span><span class="nav-badge">${tables.size}</span>`;
+    div.onclick = () => selectMenu(mn);
+    navList.appendChild(div);
+  });
+  // Auto-select first menu
+  selectMenu(MENU_ORDER[0]);
+}
+
+function selectMenu(mn) {
+  currentMenu = mn;
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.mn === mn);
+  });
+  // Update topbar
+  const topbar = document.getElementById('topbar');
+  const rels = TBLDEF.filter(r => r.mn === mn);
+  const tables = new Set();
+  rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
+  topbar.innerHTML = `<h1>${mn} ${MENU_LABELS[mn]||''}</h1><span class="sub">${tables.size} 張資料表 · ${rels.length} 條關聯</span>`;
+  // Render ERD
+  renderERD(mn);
+}
+
+function isKeyCol(col, keys) {
+  if (!keys) return false;
+  const keyArr = keys.split(',').map(k => k.trim());
+  for (const key of keyArr) {
+    if (col.f === key) return true;
+    if (col.c === key) return true;
+    // Handle captions with trailing suffix like 契約編號F → 契約編號
+    if (col.c.replace(/[A-Z]$/, '') === key) return true;
+  }
+  return false;
+}
+
+function getTableDesc(mn, tableName) {
+  // Get description from TBLDEF for this menunum context
+  const asChild = TBLDEF.find(r => r.mn === mn && r.child === tableName);
+  const asParent = TBLDEF.find(r => r.mn === mn && r.parent === tableName);
+  return (asChild && asChild.cdesc) || (asParent && asParent.pdesc) || tableName;
+}
+
+function getTableKeys(mn, tableName) {
+  // Collect all FK keys for this table in this menunum
+  const keys = new Set();
+  TBLDEF.filter(r => r.mn === mn).forEach(r => {
+    if (r.child === tableName) r.ckeys.split(',').forEach(k => keys.add(k.trim()));
+    if (r.parent === tableName) r.pkeys.split(',').forEach(k => keys.add(k.trim()));
+  });
+  return [...keys];
+}
+
+function computeLayout(mn) {
+  const rels = TBLDEF.filter(r => r.mn === mn);
+  const isChild = new Set(), isParent = new Set();
+  const allTables = new Set();
+
+  // Deduplicate: same child→parent pair in same menunum (A01 has eep_iwd_10→eep_iwh twice)
+  const seen = new Set();
+  const uniqueRels = [];
+  rels.forEach(r => {
+    const sig = r.child + '→' + r.parent;
+    if (!seen.has(sig)) {
+      seen.add(sig);
+      uniqueRels.push(r);
+    }
+  });
+
+  uniqueRels.forEach(r => {
+    isChild.add(r.child);
+    isParent.add(r.parent);
+    allTables.add(r.child);
+    allTables.add(r.parent);
+  });
+
+  const pureParents = [...allTables].filter(t => isParent.has(t) && !isChild.has(t));
+  const middle = [...allTables].filter(t => isParent.has(t) && isChild.has(t));
+  const pureChildren = [...allTables].filter(t => isChild.has(t) && !isParent.has(t));
+
+  const columns = [];
+  if (pureParents.length) columns.push(pureParents);
+  if (middle.length) columns.push(middle);
+  if (pureChildren.length) columns.push(pureChildren);
+
+  // If there's only 1 column (shouldn't happen with rels), center it
+  if (columns.length === 0) return { positions: {}, rels: uniqueRels };
+
+  const positions = {};
+  const colSpacing = 400;
+  const startX = 60;
+
+  columns.forEach((col, ci) => {
+    // Compute card heights first to distribute vertically
+    const heights = col.map(t => getCardHeight(t, mn));
+    const totalH = heights.reduce((a, b) => a + b, 0) + (col.length - 1) * 40;
+    let y = 40;
+
+    col.forEach((tableName, ti) => {
+      const role = (isParent.has(tableName) && !isChild.has(tableName)) ? 'parent' :
+                   (isChild.has(tableName) && !isParent.has(tableName)) ? 'child' : 'both';
+      positions[tableName] = { x: startX + ci * colSpacing, y, role };
+      y += heights[ti] + 40;
+    });
+  });
+
+  return { positions, rels: uniqueRels };
+}
+
+function getCardHeight(tableName, mn) {
+  const cols = COLDEF[tableName] || [];
+  const keys = getTableKeys(mn, tableName);
+  // Filter: show key columns first, then others, max 22
+  const MAX = 22;
+  const visible = Math.min(cols.length, MAX);
+  return 42 + visible * 24 + (cols.length > MAX ? 28 : 0) + 8;
+}
+
+function renderERD(mn) {
+  const canvas = document.getElementById('canvas');
+  const welcome = document.getElementById('welcome');
+  welcome.style.display = 'none';
+
+  // Clear existing cards and SVG
+  canvas.querySelectorAll('.card').forEach(el => el.remove());
+  const svg = document.getElementById('svgLayer');
+  svg.innerHTML = '';
+
+  const { positions, rels } = computeLayout(mn);
+
+  // Determine canvas size
+  let maxX = 800, maxY = 600;
+  Object.values(positions).forEach(p => {
+    maxX = Math.max(maxX, p.x + 380);
+    maxY = Math.max(maxY, p.y + 600);
+  });
+  canvas.style.width = maxX + 'px';
+  canvas.style.height = maxY + 'px';
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+
+  // Render cards
+  const cardElements = {};
+  Object.entries(positions).forEach(([tableName, pos]) => {
+    const card = createCard(tableName, mn, pos);
+    canvas.appendChild(card);
+    cardElements[tableName] = card;
+  });
+
+  // Render relationship lines
+  setTimeout(() => {
+    rels.forEach((r, idx) => {
+      drawRelLine(svg, cardElements, r, idx);
+    });
+  }, 50);
+}
+
+function createCard(tableName, mn, pos) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.left = pos.x + 'px';
+  card.style.top = pos.y + 'px';
+  card.id = 'card-' + tableName.replace(/[^a-zA-Z0-9_]/g, '_');
+
+  const desc = getTableDesc(mn, tableName);
+  const keys = getTableKeys(mn, tableName);
+  const keyJoin = keys.join(',');
+
+  const headerColor = pos.role === 'parent' ? PARENT_COLOR :
+                      pos.role === 'child' ? CHILD_COLOR : MIDDLE_COLOR;
+  const roleName = pos.role === 'parent' ? '主檔' :
+                   pos.role === 'child' ? '明細' : '中間';
+
+  // Build columns
+  const cols = COLDEF[tableName] || [];
+  const MAX = 22;
+
+  let html = `<div class="card-header" style="background:${headerColor}">
+    <span class="tbl-name">${tableName}</span>
+    <span class="tbl-desc">${desc}</span>
+    <span class="role-badge">${roleName}</span>
+  </div><div class="card-body">`;
+
+  const shown = cols.slice(0, MAX);
+  shown.forEach(col => {
+    const isFk = isKeyCol(col, keyJoin);
+    html += `<div class="col-row${isFk ? ' fk-row' : ''}">
+      <span class="col-icon">${isFk ? '🔑' : ''}</span>
+      <span class="col-field">${col.f}</span>
+      <span class="col-caption">${col.c}</span>
+    </div>`;
+  });
+
+  html += '</div>';
+  if (cols.length > MAX) {
+    html += `<div class="card-footer">... 還有 ${cols.length - MAX} 個欄位</div>`;
+  }
+
+  card.innerHTML = html;
+  return card;
+}
+
+function drawRelLine(svg, cardElements, rel, idx) {
+  const childCard = cardElements[rel.child];
+  const parentCard = cardElements[rel.parent];
+  if (!childCard || !parentCard) return;
+
+  const cRect = childCard.getBoundingClientRect();
+  const pRect = parentCard.getBoundingClientRect();
+  const svgRect = svg.getBoundingClientRect();
+
+  // Check relative positions to determine connection sides
+  const childCenterX = cRect.left + cRect.width / 2;
+  const parentCenterX = pRect.left + pRect.width / 2;
+
+  let x1, y1, x2, y2;
+  const offset = idx * 12; // Offset for multiple lines from same card
+
+  if (childCenterX > parentCenterX) {
+    // Child is to the right of parent
+    x1 = cRect.left - svgRect.left;
+    y1 = cRect.top - svgRect.top + 42 + offset;
+    x2 = pRect.right - svgRect.left;
+    y2 = pRect.top - svgRect.top + 42 + offset;
+  } else {
+    // Child is to the left of parent
+    x1 = cRect.right - svgRect.left;
+    y1 = cRect.top - svgRect.top + 42 + offset;
+    x2 = pRect.left - svgRect.left;
+    y2 = pRect.top - svgRect.top + 42 + offset;
+  }
+
+  const color = LINE_COLORS[idx % LINE_COLORS.length];
+  const midX = (x1 + x2) / 2;
+
+  // Bezier curve
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`);
+  path.setAttribute('class', 'rel-line');
+  path.setAttribute('stroke', color);
+  path.setAttribute('data-child', rel.child);
+  path.setAttribute('data-parent', rel.parent);
+
+  // Crow's foot at child end (many side)
+  const cfSize = 10;
+  const cfDir = childCenterX > parentCenterX ? -1 : 1;
+  const cf = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  cf.setAttribute('class', 'crow-foot');
+  cf.setAttribute('stroke', color);
+  // Three lines forming crow's foot
+  const lines = [
+    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1 - cfSize}`,
+    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1}`,
+    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1 + cfSize}`
+  ];
+  lines.forEach(d => {
+    const l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    l.setAttribute('d', d);
+    l.setAttribute('stroke', color);
+    l.setAttribute('stroke-width', '2');
+    l.setAttribute('fill', 'none');
+    cf.appendChild(l);
+  });
+
+  // One-side indicator at parent end (circle)
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', x2);
+  circle.setAttribute('cy', y2);
+  circle.setAttribute('r', 4);
+  circle.setAttribute('fill', '#fff');
+  circle.setAttribute('stroke', color);
+  circle.setAttribute('stroke-width', 2);
+
+  // Label
+  const labelX = midX;
+  const labelY = (y1 + y2) / 2 - 8;
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', labelX);
+  label.setAttribute('y', labelY);
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('fill', color);
+  label.setAttribute('class', 'rel-label');
+  label.textContent = rel.ckeys;
+
+  // Background rect for label
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+
+  svg.appendChild(path);
+  svg.appendChild(cf);
+  svg.appendChild(circle);
+  svg.appendChild(label);
+
+  // After text is rendered, add background
+  setTimeout(() => {
+    const bbox = label.getBBox();
+    if (bbox.width > 0) {
+      bg.setAttribute('x', bbox.x - 4);
+      bg.setAttribute('y', bbox.y - 2);
+      bg.setAttribute('width', bbox.width + 8);
+      bg.setAttribute('height', bbox.height + 4);
+      bg.setAttribute('rx', 3);
+      bg.setAttribute('fill', 'rgba(255,255,255,.85)');
+      svg.insertBefore(bg, label);
+    }
+  }, 10);
+
+  // Hover highlighting
+  path.addEventListener('mouseenter', () => {
+    path.setAttribute('stroke-width', '3.5');
+    if (childCard) childCard.style.boxShadow = `0 0 0 3px ${color}, 0 4px 16px rgba(0,0,0,.2)`;
+    if (parentCard) parentCard.style.boxShadow = `0 0 0 3px ${color}, 0 4px 16px rgba(0,0,0,.2)`;
+  });
+  path.addEventListener('mouseleave', () => {
+    path.setAttribute('stroke-width', '2');
+    if (childCard) childCard.style.boxShadow = '';
+    if (parentCard) parentCard.style.boxShadow = '';
+  });
+}
+
+// Initialize
+init();
+</script>
+</body>
+</html>
