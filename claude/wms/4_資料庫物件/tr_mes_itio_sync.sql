@@ -18,12 +18,15 @@ BEGIN
     -- Hierarchy values come from mes_itio directly (not mes_level).
     -- =====================================================================
 
+    -- COLLATE: tempdb 定序為 Chinese_Taiwan_Stroke_90_CI_AS，
+    --          acpay 為 Chinese_Taiwan_Stroke_CI_AS，
+    --          temp table 須明確指定定序避免衝突。
     CREATE TABLE #affected (
-        itemno  NVARCHAR(40),
-        posino  NVARCHAR(40),
-        wareno  NVARCHAR(40),
-        plantno NVARCHAR(40),
-        compno  NVARCHAR(40)
+        itemno  NVARCHAR(40) COLLATE Chinese_Taiwan_Stroke_CI_AS,
+        posino  NVARCHAR(40) COLLATE Chinese_Taiwan_Stroke_CI_AS,
+        wareno  NVARCHAR(40) COLLATE Chinese_Taiwan_Stroke_CI_AS,
+        plantno NVARCHAR(40) COLLATE Chinese_Taiwan_Stroke_CI_AS,
+        compno  NVARCHAR(40) COLLATE Chinese_Taiwan_Stroke_CI_AS
     );
 
     -- From deleted rows (covers DELETE and the "old" side of UPDATE)

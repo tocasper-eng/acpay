@@ -12,6 +12,11 @@
 --   - INSERT 只對 inserted 做 DISTINCT 再 NOT EXISTS，不掃全表
 --   - DELETE 只檢查 deleted 中涉及的組合，不掃全 mes_level
 --   - 與 tr_mes_itio_sync 完全獨立，各自維護不同目標表
+--
+-- Collation:
+--   tempdb 定序為 Chinese_Taiwan_Stroke_90_CI_AS，
+--   acpay 為 Chinese_Taiwan_Stroke_CI_AS，
+--   所有比對加 COLLATE 避免衝突。
 -- =====================================================================
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'tr_mes_itio_level')
     DROP TRIGGER [dbo].[tr_mes_itio_level]
@@ -31,10 +36,10 @@ BEGIN
     FROM inserted i
     WHERE NOT EXISTS (
         SELECT 1 FROM mes_level l
-        WHERE l.compno  = i.compno
-          AND l.plantno = i.plantno
-          AND l.wareno  = i.wareno
-          AND l.posino  = i.posino
+        WHERE l.compno  = i.compno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND l.plantno = i.plantno COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND l.wareno  = i.wareno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND l.posino  = i.posino  COLLATE Chinese_Taiwan_Stroke_CI_AS
     );
 
     -- ---------------------------------------------------------------
@@ -47,16 +52,16 @@ BEGIN
     INNER JOIN (
         SELECT DISTINCT compno, plantno, wareno, posino
         FROM deleted
-    ) d ON  l.compno  = d.compno
-        AND l.plantno = d.plantno
-        AND l.wareno  = d.wareno
-        AND l.posino  = d.posino
+    ) d ON  l.compno  = d.compno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+        AND l.plantno = d.plantno COLLATE Chinese_Taiwan_Stroke_CI_AS
+        AND l.wareno  = d.wareno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+        AND l.posino  = d.posino  COLLATE Chinese_Taiwan_Stroke_CI_AS
     WHERE NOT EXISTS (
         SELECT 1 FROM mes_itio m
-        WHERE m.compno  = l.compno
-          AND m.plantno = l.plantno
-          AND m.wareno  = l.wareno
-          AND m.posino  = l.posino
+        WHERE m.compno  = l.compno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND m.plantno = l.plantno COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND m.wareno  = l.wareno  COLLATE Chinese_Taiwan_Stroke_CI_AS
+          AND m.posino  = l.posino  COLLATE Chinese_Taiwan_Stroke_CI_AS
     );
 END;
 GO

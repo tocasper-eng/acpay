@@ -205,6 +205,7 @@ Each SQL file follows the pattern: DROP IF EXISTS → SET options → CREATE.
 
 - **查 schema 務必用 pymssql 直連目標伺服器**，MCP 工具 `mcp__sqlserver-nutc__*` 連的是 port 8081
 - **定序（Collation）標準為 `Chinese_Taiwan_Stroke_CI_AS`**，所有 SQL 操作遇到定序不一致時，一律轉換成此定序。JOIN、WHERE、ORDER BY 涉及中文欄位比對時加 `COLLATE Chinese_Taiwan_Stroke_CI_AS`
+- **tempdb 定序為 `Chinese_Taiwan_Stroke_90_CI_AS`**，與 acpay 不同。Trigger 內建立 `#temp` table 時，nvarchar 欄位必須加 `COLLATE Chinese_Taiwan_Stroke_CI_AS`，否則與 `inserted`/`deleted` 比對會報 collation conflict
 - nvarchar 欄位寫入中文時，值前面要加 `N` 前綴（如 `N'中文'`）
 - `num` 欄位為 identity（自動編號），INSERT 時不需指定
 - **欄位名可能含尾端空白**：192.168.50.53 的 `eep_item` 有一欄實際名稱是 `itemna `（結尾一個空白），
