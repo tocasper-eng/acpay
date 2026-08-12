@@ -122,6 +122,14 @@
     background: #fff;
     z-index: 2;
     transition: box-shadow .2s;
+    cursor: grab;
+    user-select: none;
+  }
+  .card.dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25), 0 4px 8px rgba(0,0,0,.15);
+    z-index: 100;
+    opacity: .92;
   }
   .card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12);
@@ -657,6 +665,10 @@ function getCardHeight(tableName, mn) {
   return 42 + visible * 24 + (cols.length > MAX ? 28 : 0) + 8;
 }
 
+// Current ERD state for redrawing lines after drag
+let currentCardElements = {};
+let currentRels = [];
+
 function renderERD(mn) {
   const canvas = document.getElementById('canvas');
   const welcome = document.getElementById('welcome');
@@ -668,6 +680,7 @@ function renderERD(mn) {
   svg.innerHTML = '';
 
   const { positions, rels } = computeLayout(mn);
+  currentRels = rels;
 
   // Determine canvas size
   let maxX = 800, maxY = 600;
@@ -686,14 +699,69 @@ function renderERD(mn) {
     const card = createCard(tableName, mn, pos);
     canvas.appendChild(card);
     cardElements[tableName] = card;
+    makeDraggable(card, canvas, svg);
   });
+  currentCardElements = cardElements;
 
   // Render relationship lines
   setTimeout(() => {
-    rels.forEach((r, idx) => {
-      drawRelLine(svg, cardElements, r, idx);
-    });
+    redrawLines();
   }, 50);
+}
+
+function resizeCanvas() {
+  const canvas = document.getElementById('canvas');
+  const svg = document.getElementById('svgLayer');
+  let maxX = 800, maxY = 600;
+  canvas.querySelectorAll('.card').forEach(card => {
+    maxX = Math.max(maxX, card.offsetLeft + card.offsetWidth + 60);
+    maxY = Math.max(maxY, card.offsetTop + card.offsetHeight + 60);
+  });
+  canvas.style.width = maxX + 'px';
+  canvas.style.height = maxY + 'px';
+  svg.setAttribute('width', maxX);
+  svg.setAttribute('height', maxY);
+}
+
+function redrawLines() {
+  const svg = document.getElementById('svgLayer');
+  svg.innerHTML = '';
+  currentRels.forEach((r, idx) => {
+    drawRelLine(svg, currentCardElements, r, idx);
+  });
+}
+
+function makeDraggable(card, canvas, svg) {
+  let isDragging = false, startX, startY, origLeft, origTop;
+
+  card.addEventListener('mousedown', (e) => {
+    // Don't drag if clicking on scrollbar inside card-body
+    if (e.target.closest('.card-body') && e.offsetX > e.target.clientWidth) return;
+    isDragging = true;
+    card.classList.add('dragging');
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = card.offsetLeft;
+    origTop = card.offsetTop;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    card.style.left = Math.max(0, origLeft + dx) + 'px';
+    card.style.top = Math.max(0, origTop + dy) + 'px';
+    redrawLines();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    card.classList.remove('dragging');
+    resizeCanvas();
+    redrawLines();
+  });
 }
 
 function createCard(tableName, mn, pos) {
@@ -746,29 +814,28 @@ function drawRelLine(svg, cardElements, rel, idx) {
   const parentCard = cardElements[rel.parent];
   if (!childCard || !parentCard) return;
 
-  const cRect = childCard.getBoundingClientRect();
-  const pRect = parentCard.getBoundingClientRect();
-  const svgRect = svg.getBoundingClientRect();
+  // Use offsetLeft/Top for stable positioning after drag
+  const cL = childCard.offsetLeft, cT = childCard.offsetTop;
+  const cW = childCard.offsetWidth, cH = childCard.offsetHeight;
+  const pL = parentCard.offsetLeft, pT = parentCard.offsetTop;
+  const pW = parentCard.offsetWidth, pH = parentCard.offsetHeight;
 
-  // Check relative positions to determine connection sides
-  const childCenterX = cRect.left + cRect.width / 2;
-  const parentCenterX = pRect.left + pRect.width / 2;
+  const childCenterX = cL + cW / 2;
+  const parentCenterX = pL + pW / 2;
 
   let x1, y1, x2, y2;
-  const offset = idx * 12; // Offset for multiple lines from same card
+  const offset = idx * 12;
 
   if (childCenterX > parentCenterX) {
-    // Child is to the right of parent
-    x1 = cRect.left - svgRect.left;
-    y1 = cRect.top - svgRect.top + 42 + offset;
-    x2 = pRect.right - svgRect.left;
-    y2 = pRect.top - svgRect.top + 42 + offset;
+    x1 = cL;
+    y1 = cT + 42 + offset;
+    x2 = pL + pW;
+    y2 = pT + 42 + offset;
   } else {
-    // Child is to the left of parent
-    x1 = cRect.right - svgRect.left;
-    y1 = cRect.top - svgRect.top + 42 + offset;
-    x2 = pRect.left - svgRect.left;
-    y2 = pRect.top - svgRect.top + 42 + offset;
+    x1 = cL + cW;
+    y1 = cT + 42 + offset;
+    x2 = pL;
+    y2 = pT + 42 + offset;
   }
 
   const color = LINE_COLORS[idx % LINE_COLORS.length];
