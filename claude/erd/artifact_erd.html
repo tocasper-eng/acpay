@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACPAY ERD</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f2f5;color:#1e293b;display:flex;height:100vh;overflow:hidden}
+.sb{width:220px;min-width:220px;background:linear-gradient(180deg,#1e293b,#0f172a);color:#e2e8f0;display:flex;flex-direction:column;overflow-y:auto}
+.sb h2{padding:14px;font-size:.95rem;font-weight:700;color:#fff;border-bottom:1px solid #334155;background:rgba(59,130,246,.15)}
+.dh{padding:10px 14px 3px;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;font-weight:600}
+.sg{margin-bottom:1px}
+.sh{display:flex;align-items:center;padding:7px 14px;cursor:pointer;font-size:.8rem;font-weight:600;color:#94a3b8;gap:7px;transition:all .15s;user-select:none;border-left:3px solid transparent}
+.sh:hover{background:rgba(255,255,255,.04);color:#cbd5e1}
+.sh.o{color:#e2e8f0;border-left-color:#475569}
+.sa{font-size:.55rem;transition:transform .2s;width:11px;text-align:center}
+.sh.o .sa{transform:rotate(90deg)}
+.sc{font-family:Consolas,monospace;font-size:.72rem;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;min-width:30px;text-align:center}
+.sl{flex:1}
+.sb2{font-size:.62rem;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:8px;color:#64748b}
+.si{display:none;padding-left:10px}
+.sh.o+.si{display:block}
+.ni{display:flex;align-items:center;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:.8rem;gap:7px}
+.ni:hover{background:rgba(255,255,255,.06);border-left-color:#475569}
+.ni.a{background:rgba(59,130,246,.18);border-left-color:#3b82f6;color:#fff;font-weight:600}
+.nc{font-family:Consolas,monospace;font-size:.72rem;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;min-width:30px;text-align:center}
+.ni.a .nc{background:rgba(59,130,246,.4);color:#93c5fd}
+.nl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.nb{font-size:.62rem;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:8px;color:#94a3b8}
+.mn{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tb{background:#fff;padding:10px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;min-height:48px}
+.tb h1{font-size:1.05rem;font-weight:700;color:#1e293b}
+.tb .su{font-size:.82rem;color:#64748b}
+.tb .bc{font-size:.75rem;color:#94a3b8;font-family:Consolas,monospace;background:#f1f5f9;padding:2px 7px;border-radius:4px}
+.cw{flex:1;overflow:auto;position:relative;background:radial-gradient(circle,#d1d5db 1px,transparent 1px);background-size:24px 24px}
+.cv{position:relative;min-width:900px;min-height:600px}
+.cd{position:absolute;width:300px;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.12);background:#fff;z-index:2;transition:box-shadow .2s;cursor:grab;user-select:none}
+.cd.dr{cursor:grabbing;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:100;opacity:.92}
+.cd:hover{box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:3}
+.ch{padding:7px 10px;border-radius:7px 7px 0 0;color:#fff;display:flex;align-items:center;gap:7px}
+.ch .tn{font-family:Consolas,monospace;font-size:.82rem;font-weight:700}
+.ch .td{font-size:.75rem;opacity:.9}
+.ch .rb{margin-left:auto;font-size:.62rem;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,.25);font-weight:600}
+.cb{max-height:420px;overflow-y:auto}
+.cr{display:flex;padding:2px 10px;font-size:.75rem;border-bottom:1px solid #f1f5f9;align-items:center}
+.cr:nth-child(even){background:#fafbfc}
+.cr.fk{background:#fef3c7!important;font-weight:600}
+.cr .ci{width:15px;text-align:center;margin-right:5px;font-size:.65rem}
+.cr .cf{font-family:Consolas,monospace;color:#475569;width:120px;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr.fk .cf{color:#92400e}
+.cr .cc{color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr.fk .cc{color:#78350f}
+.ft{padding:3px 10px;font-size:.68rem;color:#94a3b8;border-top:1px solid #e2e8f0;text-align:center}
+.rs{position:absolute;top:0;left:0;pointer-events:none;z-index:1}
+.rl{fill:none;stroke-width:2;pointer-events:stroke;cursor:pointer}
+.rl:hover{stroke-width:3.5}
+.rla{font-size:10px;font-family:Consolas,monospace;pointer-events:none}
+.cff{fill:none;stroke-width:2}
+.wl{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px}
+.wl .ic{font-size:2.5rem}
+.wl p{font-size:.9rem}
+.ib{background:#fff;border-top:1px solid #e2e8f0;padding:6px 20px;font-size:.75rem;color:#64748b;display:flex;gap:20px}
+.ib strong{color:#475569}
+</style>
+</head>
+<body>
+<div class="sb">
+  <h2>ACPAY ERD</h2>
+  <div id="nv"></div>
+</div>
+<div class="mn">
+  <div class="tb" id="tp">
+    <h1>TBLDEF 資料表關聯圖</h1>
+    <span class="su">選擇左側功能模組</span>
+  </div>
+  <div class="cw">
+    <div class="cv" id="cv">
+      <svg class="rs" id="sg"></svg>
+      <div class="wl" id="wl"><div class="ic">&#9776;</div><p>請從左側選擇功能模組</p></div>
+    </div>
+  </div>
+  <div class="ib">
+    <span>TBLDEF: <strong>32</strong> 筆</span>
+    <span><strong>43</strong> 張表</span>
+    <span><strong>23</strong> 模組</span>
+    <span><strong>6</strong> 子系統</span>
+    <span>acpay @ 163.17.141.61:8081</span>
+  </div>
+</div>
+<script>
+var T=[
+{db:'acpay',s:'WMS',m:'62J',c:'eep_tod',cd:'領料明細',ck:'tono',p:'eep_toh',pd:'領料主檔',pk:'tono'},
+{db:'acpay',s:'WMS',m:'62K',c:'eep_trd',cd:'繳庫明細',ck:'trno',p:'eep_trh',pd:'繳庫主檔',pk:'trno'},
+{db:'acpay',s:'WMS',m:'62K',c:'eep_plant',cd:'工廠代碼',ck:'compno',p:'eep_comp',pd:'公司代碼',pk:'compno'},
+{db:'acpay',s:'WMS',m:'66D',c:'eep_tdd',cd:'調撥明細',ck:'tdno',p:'eep_tdh',pd:'調撥主檔',pk:'tdno'},
+{db:'acpay',s:'WMS',m:'67Q',c:'mes_itio',cd:'庫存異動',ck:'itemno',p:'eep_item',pd:'物料主檔',pk:'itemno'},
+{db:'acpay',s:'WMS',m:'67Q',c:'mes_itio',cd:'庫存異動',ck:'wareno',p:'eep_ware',pd:'倉庫代碼',pk:'wareno'},
+{db:'acpay',s:'WMS',m:'96A',c:'eep_ware',cd:'倉庫代碼',ck:'plantno',p:'eep_plant',pd:'工廠代碼',pk:'plantno'},
+{db:'acpay',s:'WMS',m:'96A',c:'eep_posi',cd:'儲位代碼',ck:'wareno',p:'eep_ware',pd:'倉庫代碼',pk:'wareno'},
+{db:'acpay',s:'WMS',m:'96D',c:'eep_item',cd:'物料主檔',ck:'clasno',p:'eep_clas',pd:'物料類型',pk:'clasno'},
+{db:'acpay',s:'HR',m:'93A',c:'eep_empl',cd:'員工主檔',ck:'depano',p:'eep_depa',pd:'部門代碼',pk:'depano'},
+{db:'acpay',s:'HR',m:'93A',c:'eep_empl',cd:'員工主檔',ck:'linenum',p:'eep_line',pd:'班組代碼',pk:'linenum'},
+{db:'acpay',s:'CS',m:'A01',c:'eep_iwd_10',cd:'服務內容',ck:'契約編號',p:'eep_iwh',pd:'客服通知',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'A01',c:'eep_iwd_10',cd:'補充說明',ck:'契約編號',p:'eep_iwh',pd:'客服通知',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'A01',c:'eep_iwd_20',cd:'完工回報',ck:'契約編號',p:'eep_iwh',pd:'客服通知',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'B01',c:'pos_tod',cd:'設備清單',ck:'契約編號',p:'eep_iwh',pd:'外派工單',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'C01',c:'pos_tod',cd:'設備清單',ck:'契約編號',p:'eep_pos',pd:'新案追蹤',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'D01',c:'eep_d01',cd:'連鎖客戶',ck:'連鎖性客戶編號',p:'pos',pd:'新案追蹤',pk:'連鎖性客戶編號'},
+{db:'acpay',s:'CS',m:'E01',c:'pos_tod',cd:'設備清單',ck:'契約編號',p:'pos_log',pd:'契約變更',pk:'契約編號'},
+{db:'acpay',s:'CS',m:'F01',c:'pos_tod',cd:'設備清單',ck:'契約編號',p:'eep_dac',pd:'解約建檔',pk:'契約編號'},
+{db:'acpay',s:'IS',m:'61A',c:'eep_bmd',cd:'組合子檔',ck:'bmno',p:'eep_bmh',pd:'組合主檔',pk:'bmno'},
+{db:'acpay',s:'IS',m:'61A',c:'系統別',cd:'系統別',ck:'系統別代號',p:'eep_bmh',pd:'組合主檔',pk:'系統別代號'},
+{db:'acpay',s:'IS',m:'91H',c:'eep_numh',cd:'欄位名稱',ck:'menunum',p:'eep_menu',pd:'選單定義',pk:'menunum'},
+{db:'acpay',s:'IS',m:'91I',c:'eep_num8',cd:'欄位內容',ck:'menunum,fieldno',p:'eep_numh',pd:'欄位名稱',pk:'menunum,fieldno'},
+{db:'acpay',s:'IS',m:'99B',c:'usergroups',cd:'用戶群組',ck:'userid',p:'users',pd:'用戶代碼',pk:'userid'},
+{db:'acpay',s:'IS',m:'99B',c:'usergroups',cd:'用戶群組',ck:'groupid',p:'groups',pd:'群組代碼',pk:'groupid'},
+{db:'acpay',s:'ORG',m:'91A',c:'eep_depa',cd:'部門代碼',ck:'compno',p:'eep_comp',pd:'公司代碼',pk:'compno'},
+{db:'acpay',s:'ORG',m:'91A',c:'eep_depa',cd:'部門代碼',ck:'group2',p:'eep_group2',pd:'利潤中心',pk:'group2'},
+{db:'acpay',s:'ORG',m:'94P',c:'eep_sdgrp',cd:'銷售群組',ck:'sdorg',p:'eep_sdorg',pd:'銷售組織',pk:'sdorg'},
+{db:'acpay',s:'ORG',m:'95H',c:'eep_plant',cd:'工廠代碼',ck:'compno',p:'eep_comp',pd:'公司代碼',pk:'compno'},
+{db:'acpay',s:'ORG',m:'95P',c:'eep_mmgrp',cd:'採購群組',ck:'mmorg',p:'eep_mmorg',pd:'採購組織',pk:'mmorg'},
+{db:'acpay',s:'AR',m:'48E',c:'vw_POS_CRM_ACRTB',cd:'結帳單子',ck:'TB001,TB002',p:'vw_POS_CRM_ACRTA',pd:'結帳單主',pk:'TA001,TA002'},
+{db:'acpay',s:'AR',m:'48F',c:'vw_POS_CRM_ACRTD',cd:'收款單子',ck:'TD001,TD002',p:'vw_POS_CRM_ACRTC',pd:'收款單主',pk:'TC001,TC002'}
+];
+var ML={'48E':'結帳單','48F':'收款單','61A':'商品組合','62J':'一盤領用','62K':'一盤繳庫','66D':'庫存調撥','67Q':'庫存異動查詢','91A':'部門代碼','91H':'選單欄位定義','91I':'欄位片語內容','93A':'員工主檔','94P':'銷售群組','95H':'工廠公司','95P':'採購群組','96A':'倉庫儲位設定','96D':'物料主檔','99B':'用戶群組','A01':'客服通知','B01':'外派工單','C01':'新案建檔','D01':'連鎖客戶','E01':'主約變更','F01':'解約建檔'};
+var SL={'AR':'應收帳款','CS':'客戶服務','HR':'人力資源','IS':'資訊系統','ORG':'組織架構','WMS':'倉儲管理'};
+var SO=['WMS','ORG','HR','CS','IS','AR'];
+var C={
+'eep_comp':[{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'remark',c:'備註說明'}],
+'eep_plant':[{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'remark',c:'備註說明'}],
+'eep_posi':[{f:'posino',c:'儲位代碼'},{f:'posinm',c:'儲位名稱'},{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'remark',c:'備註說明'}],
+'eep_ware':[{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'swtc01',c:'庫別性質'},{f:'swtc02',c:'納入可用'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_trh':[{f:'trno',c:'單據編號'},{f:'trtype',c:'單據類別'},{f:'trno2',c:'相關編號'},{f:'trdate',c:'單據日期'},{f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_trd':[{f:'trno',c:'單據編號'},{f:'trseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'單位'},{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'trqty',c:'數量'},{f:'trtype',c:'單據類別'},{f:'trno2',c:'相關編號'},{f:'trdate',c:'單據日期'},{f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_toh':[{f:'tono',c:'單據編號'},{f:'totype',c:'通知類別'},{f:'tono2',c:'相關編號'},{f:'trtype',c:'單據類別'},{f:'todate',c:'單據日期'},{f:'specnm',c:'物料規格'},{f:'trno2',c:'相關單號'},{f:'itemna',c:'ERP編碼'},{f:'trdate',c:'異動日期'},{f:'zoomno',c:'專案編號'},{f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_tod':[{f:'tono',c:'單據編號'},{f:'toseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'toqty',c:'數量'},{f:'totype',c:'單據類別'},{f:'tono2',c:'相關編號'},{f:'todate',c:'單據日期'},{f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_tdh':[{f:'tdno',c:'單據編號'},{f:'tdtype',c:'單據類別'},{f:'tdno2',c:'相關編號'},{f:'tddate',c:'單據日期'},{f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'eep_tdd':[{f:'tdno',c:'單據編號'},{f:'tdseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'warenofm',c:'撥出倉庫'},{f:'warenmfm',c:'撥出倉名'},{f:'warenoto',c:'撥入倉庫'},{f:'warenmto',c:'撥入倉名'},{f:'tdqty',c:'數量'},{f:'tdtype',c:'單據類別'},{f:'tdno2',c:'相關編號'},{f:'tddate',c:'單據日期'},{f:'zoomno',c:'專案編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'plantno',c:'工廠代碼'},{f:'plantnm',c:'工廠名稱'},{f:'remark',c:'備註說明'}],
+'mes_itio':[{f:'iono',c:'單據編號'},{f:'ioseq',c:'單據項次'},{f:'ioseqseq',c:'單據三階'},{f:'iodate',c:'異動日期'},{f:'itemno',c:'物料編號'},{f:'posino',c:'儲位代碼'},{f:'wareno',c:'倉庫代碼'},{f:'plantno',c:'工廠代碼'},{f:'compno',c:'公司代碼'},{f:'ioqty',c:'單據數量'}],
+'eep_item':[{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP料號'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},{f:'remark',c:'備註說明'}],
+'eep_clas':[{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},{f:'swt',c:'庫存管制'},{f:'fg',c:'十大分類'},{f:'remark',c:'備註說明'}],
+'eep_depa':[{f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'group1',c:'集團代碼'},{f:'name1',c:'集團名稱'},{f:'group2',c:'利潤中心'},{f:'name2',c:'中心名稱'},{f:'group3',c:'廠處代碼'},{f:'name3',c:'廠處名稱'},{f:'remark',c:'備註說明'}],
+'eep_empl':[{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'emplnn',c:'英文姓名'},{f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'jobsno',c:'職位代碼'},{f:'jobsnm',c:'職位名稱'},{f:'linenum',c:'班組代碼'},{f:'linenm',c:'班組名稱'},{f:'telno',c:'連絡電話'},{f:'bbc',c:'連絡手機'},{f:'email',c:'電子郵件'},{f:'remark',c:'備註說明'}],
+'eep_group2':[{f:'group1',c:'集團代碼'},{f:'name1',c:'集團名稱'},{f:'group2',c:'利潤中心'},{f:'name2',c:'中心名稱'},{f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'currno',c:'幣別'},{f:'cldate',c:'關帳日期'},{f:'remark',c:'備註說明'}],
+'eep_line':[{f:'linenum',c:'班組代碼'},{f:'linenm',c:'班組名稱'},{f:'remark',c:'備註說明'}],
+'eep_sdgrp':[{f:'sdorgno',c:'銷售組織'},{f:'sdorgnm',c:'組織名稱'},{f:'sdgrpno',c:'銷售群組'},{f:'sdgrpnm',c:'群組名稱'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},{f:'kindno',c:'客戶類別'},{f:'kindnm',c:'類別名稱'},{f:'remark',c:'備註說明'}],
+'eep_sdorg':[{f:'sdorgno',c:'銷售組織'},{f:'sdorgnm',c:'組織名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'remark',c:'備註說明'}],
+'eep_mmgrp':[{f:'mmorgno',c:'採購組織'},{f:'mmgrpno',c:'採購群組'},{f:'mmgrpnm',c:'群組名稱'},{f:'remark',c:'備註說明'}],
+'eep_mmorg':[{f:'mmorgno',c:'採購組織'},{f:'mmorgnm',c:'組織名稱'},{f:'remark',c:'備註說明'}],
+'users':[{f:'USERID',c:'用戶代碼'},{f:'USERNAME',c:'用戶名稱'},{f:'AGENT',c:'代理人'},{f:'EMAIL',c:'電子郵件'},{f:'DESCRIPTION',c:'描述'},{f:'MOBILE',c:'手機號碼'}],
+'groups':[{f:'GROUPID',c:'群組代碼'},{f:'GROUPNAME',c:'群組名稱'},{f:'DESCRIPTION',c:'描述'},{f:'ISROLE',c:'角色'}],
+'usergroups':[{f:'USERID',c:'用戶代碼'},{f:'GROUPID',c:'群組代碼'},{f:'LINE',c:'LINE通知'}],
+'eep_iwh':[{f:'iwno',c:'通知編號'},{f:'iwtype',c:'通知類別'},{f:'address0',c:'客戶全名'},{f:'客服類別',c:'客服類別'},{f:'需要派工',c:'需要派工'},{f:'attention',c:'來電人員'},{f:'iwno2',c:'相關編號'},{f:'工單編號',c:'工單編號'},{f:'建案人員',c:'建案人員'},{f:'iwdate',c:'通知日期'},{f:'zoomno',c:'契約編號'},{f:'客服人員',c:'客服人員'},{f:'處理人員',c:'處理人員'},{f:'custno',c:'客戶代碼'},{f:'custnm',c:'客戶名稱'},{f:'技術人員',c:'技術人員'},{f:'saleno',c:'業務代碼'},{f:'案件狀態',c:'案件狀態'},{f:'結案方式',c:'結案方式'},{f:'salenm',c:'業務名稱'},{f:'契約編號',c:'契約編號'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'remark',c:'內容描述'}],
+'eep_iwd_10':[{f:'iwno',c:'通知編號'},{f:'iwseq',c:'項次'},{f:'files',c:'檔案路徑'},{f:'remark2',c:'備註說明'}],
+'eep_iwd_20':[{f:'iwno',c:'通知編號'},{f:'iwseq',c:'項次'},{f:'files1',c:'照片一'},{f:'files2',c:'照片二'},{f:'files3',c:'照片三'},{f:'dtfm',c:'起始時間'},{f:'dtto',c:'終止時間'},{f:'hrs',c:'時數'},{f:'remark',c:'備註說明'},{f:'signatures',c:'客戶簽名'}],
+'eep_menu':[{f:'menunum',c:'選單代碼'},{f:'linknumber',c:'連結編號'},{f:'linkaction',c:'連結動作'},{f:'remark',c:'備註說明'}],
+'eep_numh':[{f:'menunum',c:'選單代碼'},{f:'fieldno',c:'欄位名稱'},{f:'linknumber',c:'連結編號'},{f:'linkaction',c:'連結動作'},{f:'remark',c:'備註說明'}],
+'eep_num8':[{f:'menunum',c:'選單代碼'},{f:'num8no',c:'功能代碼'},{f:'fieldno',c:'欄位名稱'},{f:'dddwno',c:'片語代碼'},{f:'dddwnm',c:'片語內容'},{f:'linkaction',c:'連結動作'},{f:'linknumber',c:'連結編號'},{f:'remark',c:'備註說明'}],
+'eep_pos':[{f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'客戶名稱'},{f:'部門代碼',c:'部門代碼'},{f:'部門名稱',c:'部門名稱'},{f:'公司代碼',c:'公司代碼'},{f:'公司名稱',c:'公司名稱'},{f:'營業員編號',c:'營業員編號'},{f:'營業員名稱',c:'營業員名稱'},{f:'標的物名稱',c:'標的物名稱'},{f:'標的物地址',c:'標的物地址'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'remark',c:'備註說明'}],
+'pos':[{f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'客戶名稱'},{f:'部門代碼',c:'部門代碼'},{f:'公司代碼',c:'公司代碼'},{f:'營業員編號',c:'業務編號'},{f:'營業員名稱',c:'業務'},{f:'成約日期',c:'成約日期'},{f:'系統別',c:'系統別'},{f:'標的物名稱',c:'標的物名稱'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'服務起日',c:'服務起日'},{f:'服務迄日',c:'服務迄日'}],
+'pos_log':[{f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'客戶名稱'},{f:'部門代碼',c:'部門代碼'},{f:'公司代碼',c:'公司代碼'},{f:'營業員編號',c:'營業員編號'},{f:'成約日期',c:'成約日期'},{f:'收款週期',c:'收款週期'},{f:'標的物名稱',c:'標的物名稱'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'服務起日',c:'服務起日'},{f:'remark',c:'備註說明'}],
+'eep_dac':[{f:'契約編號',c:'契約編號'},{f:'契約狀態',c:'契約狀態'},{f:'契約書客戶名稱',c:'客戶名稱'},{f:'部門代碼',c:'部門代碼'},{f:'公司代碼',c:'公司代碼'},{f:'營業員編號',c:'營業員編號'},{f:'標的物名稱',c:'標的物名稱'},{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'解約日',c:'解約日'},{f:'需要派工',c:'需要派工'},{f:'處理人員',c:'處理人員'},{f:'工單編號',c:'工單編號'},{f:'remark',c:'備註說明'}],
+'pos_tod':[{f:'tono',c:'單據編號'},{f:'toseq',c:'項次'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},{f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'clasno',c:'類別代碼'},{f:'clasnm',c:'類別名稱'},{f:'wareno',c:'倉庫代碼'},{f:'warenm',c:'倉庫名稱'},{f:'toqty',c:'數量'},{f:'totype',c:'單據類別'},{f:'tono2',c:'相關編號'},{f:'todate',c:'單據日期'},{f:'zoomno',c:'契約編號'},{f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'toamt',c:'金額'},{f:'remark',c:'備註說明'}],
+'eep_d01':[{f:'連鎖性客戶編號',c:'連鎖性客戶編號'},{f:'連鎖性客戶名稱',c:'連鎖性客戶名稱'},{f:'remark',c:'備註說明'}],
+'eep_bmh':[{f:'bmno',c:'組合代碼'},{f:'bmtype',c:'組合型態'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},{f:'remark',c:'備註說明'}],
+'eep_bmd':[{f:'bmno',c:'組合代碼'},{f:'bmseq',c:'項次'},{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'},{f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP編碼'},{f:'bmqty',c:'數量'},{f:'bmpri',c:'金額'},{f:'bmtype',c:'組合型態'},{f:'remark',c:'備註說明'}],
+'系統別':[{f:'系統別代號',c:'系統別代號'},{f:'系統別名稱',c:'系統別名稱'}],
+'vw_POS_CRM_ACRTA':[{f:'TA001',c:'結帳單別'},{f:'TA002',c:'結帳單號'},{f:'TA003',c:'交易日期'},{f:'TA004',c:'客戶代號'},{f:'TA005',c:'收款業務員'},{f:'TA009',c:'幣別'},{f:'TA015',c:'發票號碼'},{f:'TA029',c:'應收金額'},{f:'TA031',c:'已收金額'},{f:'TA033',c:'未收金額'}],
+'vw_POS_CRM_ACRTB':[{f:'TB001',c:'結帳單別'},{f:'TB002',c:'結帳單號'},{f:'TB003',c:'序號'},{f:'TB004',c:'來源'},{f:'TB005',c:'憑證單別'},{f:'TB006',c:'憑證單號'},{f:'TB008',c:'憑證日期'},{f:'TB009',c:'應收金額'},{f:'TB011',c:'備註'}],
+'vw_POS_CRM_ACRTC':[{f:'TC001',c:'收款單別'},{f:'TC002',c:'收款單號'},{f:'TC003',c:'收款日期'},{f:'TC004',c:'客戶代號'},{f:'TC005',c:'幣別'},{f:'TC011',c:'原幣借方金額'},{f:'TC012',c:'原幣貸方金額'},{f:'TC015',c:'收款業務員'}],
+'vw_POS_CRM_ACRTD':[{f:'TD001',c:'收款單別'},{f:'TD002',c:'收款單號'},{f:'TD003',c:'序號'},{f:'TD004',c:'借貸'},{f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD012',c:'立帳金額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'}]
+};
+var PC='#2563eb',CC='#059669',MC='#7c3aed';
+var LC=['#6366f1','#2563eb','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#be185d'];
+var cM=null,cS=null,cCE={},cR=[];
+
+function init(){
+  var nv=document.getElementById('nv');
+  var dg={};
+  T.forEach(function(r){
+    if(!dg[r.db])dg[r.db]={};
+    if(!dg[r.db][r.s])dg[r.db][r.s]=new Set();
+    dg[r.db][r.s].add(r.m);
+  });
+  Object.keys(dg).forEach(function(db){
+    var dh=document.createElement('div');dh.className='dh';dh.textContent=db;nv.appendChild(dh);
+    var sl=Object.keys(dg[db]).sort(function(a,b){var ia=SO.indexOf(a),ib=SO.indexOf(b);return(ia===-1?99:ia)-(ib===-1?99:ib);});
+    sl.forEach(function(sys){
+      var ms=[].concat(Array.from(dg[db][sys])).sort();
+      var g=document.createElement('div');g.className='sg';
+      var sh=document.createElement('div');sh.className='sh';
+      sh.innerHTML='<span class="sa">&#9654;</span><span class="sc">'+sys+'</span><span class="sl">'+(SL[sys]||sys)+'</span><span class="sb2">'+ms.length+'</span>';
+      sh.onclick=function(){sh.classList.toggle('o');};
+      g.appendChild(sh);
+      var si=document.createElement('div');si.className='si';
+      ms.forEach(function(mn){
+        var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
+        var tb=new Set();rl.forEach(function(r){tb.add(r.c);tb.add(r.p);});
+        var d=document.createElement('div');d.className='ni';d.dataset.mn=mn;d.dataset.sys=sys;
+        d.innerHTML='<span class="nc">'+mn+'</span><span class="nl">'+(ML[mn]||mn)+'</span><span class="nb">'+tb.size+'</span>';
+        d.onclick=function(){sel(mn,sys);};
+        si.appendChild(d);
+      });
+      g.appendChild(si);nv.appendChild(g);
+    });
+  });
+  var fsh=nv.querySelector('.sh');
+  if(fsh){fsh.classList.add('o');var fi=nv.querySelector('.ni');if(fi)sel(fi.dataset.mn,fi.dataset.sys);}
+}
+
+function sel(mn,sys){
+  cM=mn;cS=sys;
+  document.querySelectorAll('.ni').forEach(function(el){el.classList.toggle('a',el.dataset.mn===mn&&el.dataset.sys===sys);});
+  document.querySelectorAll('.sh').forEach(function(el){var c=el.querySelector('.sc');if(c&&c.textContent===sys)el.classList.add('o');});
+  var tp=document.getElementById('tp');
+  var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
+  var tb=new Set();rl.forEach(function(r){tb.add(r.c);tb.add(r.p);});
+  tp.innerHTML='<span class="bc">'+sys+'</span><h1>'+mn+' '+(ML[mn]||'')+'</h1><span class="su">'+tb.size+' 張資料表 &middot; '+rl.length+' 條關聯</span>';
+  render(mn,sys);
+}
+
+function isFK(col,keys){
+  if(!keys)return false;
+  var ka=keys.split(',').map(function(k){return k.trim();});
+  for(var i=0;i<ka.length;i++){
+    var k=ka[i];
+    if(col.f===k||col.c===k)return true;
+    if(col.c.replace(/[A-Z]$/,'')===k)return true;
+    if(k.length>=3&&col.f.toLowerCase().indexOf(k.toLowerCase())===0)return true;
+    if(col.f.toLowerCase()===k.toLowerCase())return true;
+  }
+  return false;
+}
+
+function gDesc(mn,sys,tn){
+  var ac=T.find(function(r){return r.m===mn&&r.s===sys&&r.c===tn;});
+  var ap=T.find(function(r){return r.m===mn&&r.s===sys&&r.p===tn;});
+  return(ac&&ac.cd)||(ap&&ap.pd)||tn;
+}
+
+function gKeys(mn,sys,tn){
+  var ks=new Set();
+  T.filter(function(r){return r.m===mn&&r.s===sys;}).forEach(function(r){
+    if(r.c===tn)r.ck.split(',').forEach(function(k){ks.add(k.trim());});
+    if(r.p===tn)r.pk.split(',').forEach(function(k){ks.add(k.trim());});
+  });
+  return Array.from(ks);
+}
+
+function layout(mn,sys){
+  var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
+  var iC=new Set(),iP=new Set(),aT=new Set();
+  var sn=new Set(),ur=[];
+  rl.forEach(function(r){var sg=r.c+'\u2192'+r.p;if(!sn.has(sg)){sn.add(sg);ur.push(r);}});
+  ur.forEach(function(r){iC.add(r.c);iP.add(r.p);aT.add(r.c);aT.add(r.p);});
+  var pp=Array.from(aT).filter(function(t){return iP.has(t)&&!iC.has(t);});
+  var md=Array.from(aT).filter(function(t){return iP.has(t)&&iC.has(t);});
+  var pc=Array.from(aT).filter(function(t){return iC.has(t)&&!iP.has(t);});
+  var cols=[];if(pp.length)cols.push(pp);if(md.length)cols.push(md);if(pc.length)cols.push(pc);
+  if(!cols.length)return{pos:{},rels:ur};
+  var pos={},sp=380,sx=50;
+  cols.forEach(function(col,ci){var y=30;col.forEach(function(tn){
+    var h=gH(tn);
+    var role=iP.has(tn)&&!iC.has(tn)?'parent':iC.has(tn)&&!iP.has(tn)?'child':'both';
+    pos[tn]={x:sx+ci*sp,y:y,role:role};y+=h+35;
+  });});
+  return{pos:pos,rels:ur};
+}
+
+function gH(tn){var cl=C[tn]||[];return 38+Math.min(cl.length,20)*22+(cl.length>20?24:0)+6;}
+
+function render(mn,sys){
+  var cv=document.getElementById('cv');
+  document.getElementById('wl').style.display='none';
+  cv.querySelectorAll('.cd').forEach(function(e){e.remove();});
+  var sg=document.getElementById('sg');sg.innerHTML='';
+  var L=layout(mn,sys);cR=L.rels;
+  var mx=800,my=600;
+  Object.values(L.pos).forEach(function(p){mx=Math.max(mx,p.x+360);my=Math.max(my,p.y+500);});
+  cv.style.width=mx+'px';cv.style.height=my+'px';sg.setAttribute('width',mx);sg.setAttribute('height',my);
+  var ce={};
+  Object.entries(L.pos).forEach(function(e){
+    var tn=e[0],p=e[1];
+    var cd=mkCard(tn,mn,sys,p);cv.appendChild(cd);ce[tn]=cd;mkDrag(cd,cv,sg);
+  });
+  cCE=ce;setTimeout(function(){rL();},50);
+}
+
+function rSz(){
+  var cv=document.getElementById('cv'),sg=document.getElementById('sg');
+  var mx=800,my=600;
+  cv.querySelectorAll('.cd').forEach(function(cd){mx=Math.max(mx,cd.offsetLeft+cd.offsetWidth+50);my=Math.max(my,cd.offsetTop+cd.offsetHeight+50);});
+  cv.style.width=mx+'px';cv.style.height=my+'px';sg.setAttribute('width',mx);sg.setAttribute('height',my);
+}
+
+function rL(){var sg=document.getElementById('sg');sg.innerHTML='';cR.forEach(function(r,i){dLine(sg,cCE,r,i);});}
+
+function mkDrag(cd,cv,sg){
+  var dr=false,sx,sy,ol,ot;
+  cd.addEventListener('mousedown',function(e){if(e.target.closest('.cb')&&e.offsetX>e.target.clientWidth)return;dr=true;cd.classList.add('dr');sx=e.clientX;sy=e.clientY;ol=cd.offsetLeft;ot=cd.offsetTop;e.preventDefault();});
+  document.addEventListener('mousemove',function(e){if(!dr)return;cd.style.left=Math.max(0,ol+(e.clientX-sx))+'px';cd.style.top=Math.max(0,ot+(e.clientY-sy))+'px';rL();});
+  document.addEventListener('mouseup',function(){if(!dr)return;dr=false;cd.classList.remove('dr');rSz();rL();});
+}
+
+function mkCard(tn,mn,sys,pos){
+  var cd=document.createElement('div');cd.className='cd';cd.style.left=pos.x+'px';cd.style.top=pos.y+'px';
+  var desc=gDesc(mn,sys,tn),keys=gKeys(mn,sys,tn),kj=keys.join(',');
+  var hc=pos.role==='parent'?PC:pos.role==='child'?CC:MC;
+  var rn=pos.role==='parent'?'主檔':pos.role==='child'?'明細':'中間';
+  var cl=C[tn]||[],MX=20;
+  var h='<div class="ch" style="background:'+hc+'"><span class="tn">'+tn+'</span><span class="td">'+desc+'</span><span class="rb">'+rn+'</span></div><div class="cb">';
+  cl.slice(0,MX).forEach(function(col){var fk=isFK(col,kj);h+='<div class="cr'+(fk?' fk':'')+'"><span class="ci">'+(fk?'&#128273;':'')+'</span><span class="cf">'+col.f+'</span><span class="cc">'+col.c+'</span></div>';});
+  h+='</div>';
+  if(cl.length>MX)h+='<div class="ft">... 還有 '+(cl.length-MX)+' 個欄位</div>';
+  if(!cl.length)h+='<div class="ft" style="color:#dc2626">尚無欄位定義</div>';
+  cd.innerHTML=h;return cd;
+}
+
+function dLine(sg,ce,rel,idx){
+  var cc=ce[rel.c],pc=ce[rel.p];if(!cc||!pc)return;
+  var cL=cc.offsetLeft,cT=cc.offsetTop,cW=cc.offsetWidth,pL=pc.offsetLeft,pT=pc.offsetTop,pW=pc.offsetWidth;
+  var ccx=cL+cW/2,pcx=pL+pW/2,x1,y1,x2,y2,off=idx*12;
+  if(ccx>pcx){x1=cL;y1=cT+38+off;x2=pL+pW;y2=pT+38+off;}
+  else{x1=cL+cW;y1=cT+38+off;x2=pL;y2=pT+38+off;}
+  var co=LC[idx%LC.length],mx=(x1+x2)/2;
+  var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d','M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2);
+  p.setAttribute('class','rl');p.setAttribute('stroke',co);
+  var cs=10,cd=ccx>pcx?-1:1;
+  var cf=document.createElementNS('http://www.w3.org/2000/svg','g');cf.setAttribute('class','cff');cf.setAttribute('stroke',co);
+  ['M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1-cs),'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+y1,'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1+cs)].forEach(function(d){
+    var l=document.createElementNS('http://www.w3.org/2000/svg','path');l.setAttribute('d',d);l.setAttribute('stroke',co);l.setAttribute('stroke-width','2');l.setAttribute('fill','none');cf.appendChild(l);
+  });
+  var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.setAttribute('cx',x2);ci.setAttribute('cy',y2);ci.setAttribute('r',4);ci.setAttribute('fill','#fff');ci.setAttribute('stroke',co);ci.setAttribute('stroke-width',2);
+  var lx=mx,ly=(y1+y2)/2-8;
+  var lb=document.createElementNS('http://www.w3.org/2000/svg','text');lb.setAttribute('x',lx);lb.setAttribute('y',ly);lb.setAttribute('text-anchor','middle');lb.setAttribute('fill',co);lb.setAttribute('class','rla');lb.textContent=rel.ck;
+  var bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  sg.appendChild(p);sg.appendChild(cf);sg.appendChild(ci);sg.appendChild(lb);
+  setTimeout(function(){var bb=lb.getBBox();if(bb.width>0){bg.setAttribute('x',bb.x-3);bg.setAttribute('y',bb.y-1);bg.setAttribute('width',bb.width+6);bg.setAttribute('height',bb.height+2);bg.setAttribute('rx',3);bg.setAttribute('fill','rgba(255,255,255,.85)');sg.insertBefore(bg,lb);}},10);
+  p.addEventListener('mouseenter',function(){p.setAttribute('stroke-width','3.5');if(cc)cc.style.boxShadow='0 0 0 3px '+co;if(pc)pc.style.boxShadow='0 0 0 3px '+co;});
+  p.addEventListener('mouseleave',function(){p.setAttribute('stroke-width','2');if(cc)cc.style.boxShadow='';if(pc)pc.style.boxShadow='';});
+}
+init();
+</script>
+</body>
+</html>
