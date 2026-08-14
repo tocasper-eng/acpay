@@ -16,21 +16,13 @@
   }
   /* ── Sidebar ─────────────────── */
   .sidebar {
-    width: 220px;
-    min-width: 220px;
+    width: 240px;
+    min-width: 240px;
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     color: #e2e8f0;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-  }
-  .sidebar-title {
-    padding: 20px 16px 8px;
-    font-size: .75rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #64748b;
-    font-weight: 600;
   }
   .sidebar h2 {
     padding: 16px;
@@ -40,15 +32,74 @@
     border-bottom: 1px solid #334155;
     background: rgba(59,130,246,.15);
   }
+  .db-header {
+    padding: 12px 16px 4px;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .sys-group { margin-bottom: 2px; }
+  .sys-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #94a3b8;
+    gap: 8px;
+    transition: all .15s;
+    user-select: none;
+    border-left: 3px solid transparent;
+  }
+  .sys-header:hover {
+    background: rgba(255,255,255,.04);
+    color: #cbd5e1;
+  }
+  .sys-header.open {
+    color: #e2e8f0;
+    border-left-color: #475569;
+  }
+  .sys-arrow {
+    font-size: .6rem;
+    transition: transform .2s;
+    width: 12px;
+    text-align: center;
+  }
+  .sys-header.open .sys-arrow { transform: rotate(90deg); }
+  .sys-code {
+    font-family: 'Consolas', monospace;
+    font-size: .75rem;
+    background: rgba(255,255,255,.08);
+    padding: 1px 6px;
+    border-radius: 3px;
+    min-width: 32px;
+    text-align: center;
+  }
+  .sys-label { flex: 1; }
+  .sys-badge {
+    font-size: .65rem;
+    background: rgba(255,255,255,.08);
+    padding: 1px 6px;
+    border-radius: 8px;
+    color: #64748b;
+  }
+  .sys-items {
+    display: none;
+    padding-left: 12px;
+  }
+  .sys-header.open + .sys-items { display: block; }
   .nav-item {
     display: flex;
     align-items: center;
-    padding: 10px 16px;
+    padding: 7px 16px;
     cursor: pointer;
     border-left: 3px solid transparent;
     transition: all .15s;
-    font-size: .88rem;
-    gap: 10px;
+    font-size: .82rem;
+    gap: 8px;
   }
   .nav-item:hover {
     background: rgba(255,255,255,.06);
@@ -62,21 +113,20 @@
   }
   .nav-code {
     font-family: 'Consolas', monospace;
-    font-size: .8rem;
+    font-size: .75rem;
     background: rgba(255,255,255,.08);
-    padding: 2px 6px;
+    padding: 1px 6px;
     border-radius: 3px;
-    min-width: 36px;
+    min-width: 32px;
     text-align: center;
   }
   .nav-item.active .nav-code {
     background: rgba(59,130,246,.4);
     color: #93c5fd;
   }
-  .nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
   .nav-badge {
-    margin-left: auto;
-    font-size: .7rem;
+    font-size: .65rem;
     background: rgba(255,255,255,.1);
     padding: 1px 6px;
     border-radius: 8px;
@@ -100,6 +150,14 @@
   }
   .topbar h1 { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
   .topbar .sub { font-size: .85rem; color: #64748b; }
+  .topbar .breadcrumb {
+    font-size: .78rem;
+    color: #94a3b8;
+    font-family: 'Consolas', monospace;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
   .canvas-wrap {
     flex: 1;
     overflow: auto;
@@ -254,7 +312,6 @@
 <body>
 <div class="sidebar">
   <h2>ACPAY ERD</h2>
-  <div class="sidebar-title">功能模組</div>
   <div id="navList"></div>
 </div>
 <div class="main">
@@ -272,59 +329,81 @@
     </div>
   </div>
   <div class="info-bar" id="infoBar">
-    <span>TBLDEF: <strong>22</strong> 筆關聯定義</span>
-    <span>涵蓋 <strong>31</strong> 張資料表</span>
-    <span>功能模組: <strong>16</strong> 組</span>
+    <span>TBLDEF: <strong>32</strong> 筆關聯定義</span>
+    <span>涵蓋 <strong>43</strong> 張資料表</span>
+    <span>功能模組: <strong>23</strong> 組</span>
+    <span>子系統: <strong>6</strong> 組</span>
     <span>資料來源: acpay @ 163.17.141.61:8081</span>
   </div>
 </div>
 
 <script>
 /* ================================================================
-   DATA — TBLDEF relationships
+   DATA — TBLDEF relationships (32 rows)
    ================================================================ */
 const TBLDEF = [
-  {mn:'62J',child:'eep_tod',  cdesc:'領料明細',ckeys:'tono',          parent:'eep_toh',  pdesc:'領料主檔',pkeys:'tono'},
-  {mn:'62K',child:'eep_trd',  cdesc:'繳庫明細',ckeys:'trno',          parent:'eep_trh',  pdesc:'繳庫主檔',pkeys:'trno'},
-  {mn:'62K',child:'eep_plant',cdesc:'工廠代碼',ckeys:'compno',        parent:'eep_comp', pdesc:'公司代碼',pkeys:'compno'},
-  {mn:'66D',child:'eep_tdd',  cdesc:'調撥明細',ckeys:'tdno',          parent:'eep_tdh',  pdesc:'調撥主檔',pkeys:'tdno'},
-  {mn:'67Q',child:'mes_itio', cdesc:'庫存異動',ckeys:'itemno',        parent:'eep_item', pdesc:'物料主檔',pkeys:'itemno'},
-  {mn:'67Q',child:'mes_itio', cdesc:'庫存異動',ckeys:'wareno',        parent:'eep_ware', pdesc:'倉庫代碼',pkeys:'wareno'},
-  {mn:'91H',child:'eep_numh', cdesc:'欄位名稱',ckeys:'menunum',      parent:'eep_menu', pdesc:'選單定義',pkeys:'menunum'},
-  {mn:'91I',child:'eep_num8', cdesc:'欄位內容',ckeys:'menunum,fieldno',parent:'eep_numh',pdesc:'欄位名稱',pkeys:'menunum,fieldno'},
-  {mn:'96A',child:'eep_ware', cdesc:'倉庫代碼',ckeys:'plantno',      parent:'eep_plant',pdesc:'工廠代碼',pkeys:'plantno'},
-  {mn:'96A',child:'eep_posi', cdesc:'儲位代碼',ckeys:'wareno',       parent:'eep_ware', pdesc:'倉庫代碼',pkeys:'wareno'},
-  {mn:'A01',child:'eep_iwd_10',cdesc:'服務內容',ckeys:'契約編號',     parent:'eep_iwh',  pdesc:'客服通知',pkeys:'契約編號'},
-  {mn:'A01',child:'eep_iwd_20',cdesc:'完工回報',ckeys:'契約編號',     parent:'eep_iwh',  pdesc:'客服通知',pkeys:'契約編號'},
-  {mn:'B01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_iwh',  pdesc:'外派工單',pkeys:'契約編號'},
-  {mn:'C01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_pos',  pdesc:'新案追蹤',pkeys:'契約編號'},
-  {mn:'D01',child:'eep_d01',  cdesc:'連鎖客戶',ckeys:'連鎖性客戶編號',parent:'pos',      pdesc:'新案追蹤',pkeys:'連鎖性客戶編號'},
-  {mn:'E01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'pos_log',  pdesc:'契約變更',pkeys:'契約編號'},
-  {mn:'F01',child:'pos_tod',  cdesc:'設備清單',ckeys:'契約編號',      parent:'eep_dac',  pdesc:'解約建檔',pkeys:'契約編號'},
-  {mn:'61A',child:'eep_bmd', cdesc:'組合子檔',ckeys:'bmno',          parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'bmno'},
-  {mn:'61A',child:'系統別',   cdesc:'系統別',  ckeys:'系統別代號',    parent:'eep_bmh',  pdesc:'組合主檔',pkeys:'系統別代號'},
-  {mn:'48E',child:'vw_POS_CRM_ACRTB',cdesc:'結帳單子',ckeys:'TB001,TB002',parent:'vw_POS_CRM_ACRTA',pdesc:'結帳單主',pkeys:'TA001,TA002'},
-  {mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'收款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'收款單主',pkeys:'TC001,TC002'}
+  // WMS
+  {db:'acpay',sys:'WMS',mn:'62J',child:'eep_tod',cdesc:'領料明細',ckeys:'tono',parent:'eep_toh',pdesc:'領料主檔',pkeys:'tono'},
+  {db:'acpay',sys:'WMS',mn:'62K',child:'eep_trd',cdesc:'繳庫明細',ckeys:'trno',parent:'eep_trh',pdesc:'繳庫主檔',pkeys:'trno'},
+  {db:'acpay',sys:'WMS',mn:'62K',child:'eep_plant',cdesc:'工廠代碼',ckeys:'compno',parent:'eep_comp',pdesc:'公司代碼',pkeys:'compno'},
+  {db:'acpay',sys:'WMS',mn:'66D',child:'eep_tdd',cdesc:'調撥明細',ckeys:'tdno',parent:'eep_tdh',pdesc:'調撥主檔',pkeys:'tdno'},
+  {db:'acpay',sys:'WMS',mn:'67Q',child:'mes_itio',cdesc:'庫存異動',ckeys:'itemno',parent:'eep_item',pdesc:'物料主檔',pkeys:'itemno'},
+  {db:'acpay',sys:'WMS',mn:'67Q',child:'mes_itio',cdesc:'庫存異動',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
+  {db:'acpay',sys:'WMS',mn:'96A',child:'eep_ware',cdesc:'倉庫代碼',ckeys:'plantno',parent:'eep_plant',pdesc:'工廠代碼',pkeys:'plantno'},
+  {db:'acpay',sys:'WMS',mn:'96A',child:'eep_posi',cdesc:'儲位代碼',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
+  {db:'acpay',sys:'WMS',mn:'96D',child:'eep_item',cdesc:'物料主檔',ckeys:'clasno',parent:'eep_clas',pdesc:'物料類型',pkeys:'clasno'},
+  // HR
+  {db:'acpay',sys:'HR',mn:'93A',child:'eep_empl',cdesc:'員工主檔',ckeys:'depano',parent:'eep_depa',pdesc:'部門代碼',pkeys:'depano'},
+  {db:'acpay',sys:'HR',mn:'93A',child:'eep_empl',cdesc:'員工主檔',ckeys:'linenum',parent:'eep_line',pdesc:'班組代碼',pkeys:'linenum'},
+  // CS
+  {db:'acpay',sys:'CS',mn:'A01',child:'eep_iwd_10',cdesc:'服務內容',ckeys:'契約編號',parent:'eep_iwh',pdesc:'客服通知',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'A01',child:'eep_iwd_10',cdesc:'補充說明',ckeys:'契約編號',parent:'eep_iwh',pdesc:'客服通知',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'A01',child:'eep_iwd_20',cdesc:'完工回報',ckeys:'契約編號',parent:'eep_iwh',pdesc:'客服通知',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'B01',child:'pos_tod',cdesc:'設備清單',ckeys:'契約編號',parent:'eep_iwh',pdesc:'外派工單',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'C01',child:'pos_tod',cdesc:'設備清單',ckeys:'契約編號',parent:'eep_pos',pdesc:'新案追蹤',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'D01',child:'eep_d01',cdesc:'連鎖客戶',ckeys:'連鎖性客戶編號',parent:'pos',pdesc:'新案追蹤',pkeys:'連鎖性客戶編號'},
+  {db:'acpay',sys:'CS',mn:'E01',child:'pos_tod',cdesc:'設備清單',ckeys:'契約編號',parent:'pos_log',pdesc:'契約變更',pkeys:'契約編號'},
+  {db:'acpay',sys:'CS',mn:'F01',child:'pos_tod',cdesc:'設備清單',ckeys:'契約編號',parent:'eep_dac',pdesc:'解約建檔',pkeys:'契約編號'},
+  // IS
+  {db:'acpay',sys:'IS',mn:'61A',child:'eep_bmd',cdesc:'組合子檔',ckeys:'bmno',parent:'eep_bmh',pdesc:'組合主檔',pkeys:'bmno'},
+  {db:'acpay',sys:'IS',mn:'61A',child:'系統別',cdesc:'系統別',ckeys:'系統別代號',parent:'eep_bmh',pdesc:'組合主檔',pkeys:'系統別代號'},
+  {db:'acpay',sys:'IS',mn:'91H',child:'eep_numh',cdesc:'欄位名稱',ckeys:'menunum',parent:'eep_menu',pdesc:'選單定義',pkeys:'menunum'},
+  {db:'acpay',sys:'IS',mn:'91I',child:'eep_num8',cdesc:'欄位內容',ckeys:'menunum,fieldno',parent:'eep_numh',pdesc:'欄位名稱',pkeys:'menunum,fieldno'},
+  {db:'acpay',sys:'IS',mn:'99B',child:'usergroups',cdesc:'用戶群組',ckeys:'userid',parent:'users',pdesc:'用戶代碼',pkeys:'userid'},
+  {db:'acpay',sys:'IS',mn:'99B',child:'usergroups',cdesc:'用戶群組',ckeys:'groupid',parent:'groups',pdesc:'群組代碼',pkeys:'groupid'},
+  // ORG
+  {db:'acpay',sys:'ORG',mn:'91A',child:'eep_depa',cdesc:'部門代碼',ckeys:'compno',parent:'eep_comp',pdesc:'公司代碼',pkeys:'compno'},
+  {db:'acpay',sys:'ORG',mn:'91A',child:'eep_depa',cdesc:'部門代碼',ckeys:'group2',parent:'eep_group2',pdesc:'利潤中心',pkeys:'group2'},
+  {db:'acpay',sys:'ORG',mn:'94P',child:'eep_sdgrp',cdesc:'銷售群組',ckeys:'sdorg',parent:'eep_sdorg',pdesc:'銷售組織',pkeys:'sdorg'},
+  {db:'acpay',sys:'ORG',mn:'95H',child:'eep_plant',cdesc:'工廠代碼',ckeys:'compno',parent:'eep_comp',pdesc:'公司代碼',pkeys:'compno'},
+  {db:'acpay',sys:'ORG',mn:'95P',child:'eep_mmgrp',cdesc:'採購群組',ckeys:'mmorg',parent:'eep_mmorg',pdesc:'採購組織',pkeys:'mmorg'},
+  // AR
+  {db:'acpay',sys:'AR',mn:'48E',child:'vw_POS_CRM_ACRTB',cdesc:'結帳單子',ckeys:'TB001,TB002',parent:'vw_POS_CRM_ACRTA',pdesc:'結帳單主',pkeys:'TA001,TA002'},
+  {db:'acpay',sys:'AR',mn:'48F',child:'vw_POS_CRM_ACRTD',cdesc:'收款單子',ckeys:'TD001,TD002',parent:'vw_POS_CRM_ACRTC',pdesc:'收款單主',pkeys:'TC001,TC002'}
 ];
 
-/* ── Duplicate A01 row removed (eep_iwd_10 補充說明 is same FK as 服務內容) ── */
-
 /* ================================================================
-   DATA — Menu labels
+   DATA — Labels
    ================================================================ */
 const MENU_LABELS = {
   '48E':'結帳單','48F':'收款單','61A':'商品組合',
   '62J':'一盤領用','62K':'一盤繳庫','66D':'庫存調撥','67Q':'庫存異動查詢',
-  '91H':'選單欄位定義','91I':'欄位片語內容','96A':'倉庫儲位設定',
+  '91A':'部門代碼','91H':'選單欄位定義','91I':'欄位片語內容',
+  '93A':'員工主檔','94P':'銷售群組','95H':'工廠公司','95P':'採購群組',
+  '96A':'倉庫儲位設定','96D':'物料主檔','99B':'用戶群組',
   'A01':'客服通知','B01':'外派工單','C01':'新案建檔',
   'D01':'連鎖客戶','E01':'主約變更','F01':'解約建檔'
 };
 
-const MENU_ORDER = ['48E','48F','61A','62J','62K','66D','67Q','96A','A01','B01','C01','D01','E01','F01','91H','91I'];
+const SYS_LABELS = {
+  'AR':'應收帳款','CS':'客戶服務','HR':'人力資源',
+  'IS':'資訊系統','ORG':'組織架構','WMS':'倉儲管理'
+};
+
+const SYS_ORDER = ['WMS','ORG','HR','CS','IS','AR'];
 
 /* ================================================================
-   DATA — COLDEF columns per table (audit trail fields removed)
-   f = FIELD_NAME, c = CAPTION
+   DATA — COLDEF columns per table (audit fields removed)
    ================================================================ */
 const COLDEF = {
 'eep_comp':[
@@ -392,6 +471,56 @@ const COLDEF = {
   {f:'itemno',c:'物料編號'},{f:'itemnm',c:'物料名稱'},{f:'itemna',c:'ERP料號'},
   {f:'specnm',c:'物料規格'},{f:'unitno',c:'庫存單位'},{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},
   {f:'remark',c:'備註說明'}
+],
+'eep_clas':[
+  {f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},{f:'swt',c:'庫存管制'},{f:'fg',c:'十大分類'},{f:'remark',c:'備註說明'}
+],
+'eep_depa':[
+  {f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},
+  {f:'group1',c:'集團代碼'},{f:'name1',c:'集團名稱'},{f:'group2',c:'利潤中心'},{f:'name2',c:'中心名稱'},
+  {f:'group3',c:'廠處代碼'},{f:'name3',c:'廠處名稱'},{f:'group4',c:'四階代碼'},{f:'name4',c:'四階名稱'},
+  {f:'group5',c:'五階代碼'},{f:'name5',c:'五階名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_empl':[
+  {f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'emplnn',c:'英文姓名'},
+  {f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'jobsno',c:'職位代碼'},{f:'jobsnm',c:'職位名稱'},
+  {f:'linenum',c:'班組代碼'},{f:'linenm',c:'班組名稱'},
+  {f:'telno',c:'連絡電話'},{f:'bbc',c:'連絡手機'},{f:'email',c:'電子郵件'},{f:'remark',c:'備註說明'}
+],
+'eep_group2':[
+  {f:'group1',c:'集團代碼'},{f:'name1',c:'集團名稱'},{f:'group2',c:'利潤中心'},{f:'name2',c:'中心名稱'},
+  {f:'depano',c:'部門代碼'},{f:'depanm',c:'部門名稱'},{f:'currno',c:'幣別'},{f:'cldate',c:'關帳日期'},
+  {f:'remark',c:'備註說明'}
+],
+'eep_line':[
+  {f:'linenum',c:'班組代碼'},{f:'linenm',c:'班組名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_sdgrp':[
+  {f:'sdorgno',c:'銷售組織'},{f:'sdorgnm',c:'組織名稱'},{f:'sdgrpno',c:'銷售群組'},{f:'sdgrpnm',c:'群組名稱'},
+  {f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'clasno',c:'成本大類'},{f:'clasnm',c:'大類名稱'},
+  {f:'kindno',c:'客戶類別'},{f:'kindnm',c:'類別名稱'},{f:'swt',c:'庫存管制'},{f:'remark',c:'備註說明'}
+],
+'eep_sdorg':[
+  {f:'sdorgno',c:'銷售組織'},{f:'sdorgnm',c:'組織名稱'},{f:'compno',c:'公司代碼'},{f:'compnm',c:'公司名稱'},
+  {f:'emplno',c:'員工代碼'},{f:'emplnm',c:'員工名稱'},{f:'swt',c:'庫存管制'},{f:'remark',c:'備註說明'}
+],
+'eep_mmgrp':[
+  {f:'mmorgno',c:'採購組織'},{f:'mmgrpno',c:'採購群組'},{f:'mmgrpnm',c:'群組名稱'},{f:'remark',c:'備註說明'}
+],
+'eep_mmorg':[
+  {f:'mmorgno',c:'採購組織'},{f:'mmorgnm',c:'組織名稱'},{f:'remark',c:'備註說明'}
+],
+'users':[
+  {f:'USERID',c:'用戶代碼'},{f:'USERNAME',c:'用戶名稱'},{f:'AGENT',c:'代理人'},
+  {f:'EMAIL',c:'電子郵件'},{f:'DESCRIPTION',c:'描述'},{f:'SIGNATURE',c:'簽章'},
+  {f:'MOBILE',c:'手機號碼'},{f:'CREATEDATE',c:'建立日期'},{f:'LASTDATE',c:'最後登入'}
+],
+'groups':[
+  {f:'GROUPID',c:'群組代碼'},{f:'GROUPNAME',c:'群組名稱'},{f:'DESCRIPTION',c:'描述'},
+  {f:'MSAD',c:'AD群組'},{f:'ISROLE',c:'角色'}
+],
+'usergroups':[
+  {f:'USERID',c:'用戶代碼'},{f:'GROUPID',c:'群組代碼'},{f:'LINE',c:'LINE通知'}
 ],
 'eep_iwh':[
   {f:'iwno',c:'通知編號'},{f:'iwtype',c:'通知類別'},{f:'address0',c:'客戶全名'},
@@ -525,7 +654,7 @@ const COLDEF = {
 };
 
 /* ================================================================
-   DATA — Color palette for parent/child cards
+   DATA — Color palette
    ================================================================ */
 const PARENT_COLOR = '#2563eb';
 const CHILD_COLOR  = '#059669';
@@ -536,155 +665,192 @@ const LINE_COLORS = ['#6366f1','#2563eb','#0891b2','#059669','#d97706','#dc2626'
    RENDERING LOGIC
    ================================================================ */
 let currentMenu = null;
+let currentSys = null;
+let currentCardElements = {};
+let currentRels = [];
 
 function init() {
-  // Build sidebar navigation
   const navList = document.getElementById('navList');
-  MENU_ORDER.forEach(mn => {
-    const rels = TBLDEF.filter(r => r.mn === mn);
-    const tables = new Set();
-    rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
-    const div = document.createElement('div');
-    div.className = 'nav-item';
-    div.dataset.mn = mn;
-    div.innerHTML = `<span class="nav-code">${mn}</span><span class="nav-label">${MENU_LABELS[mn]||mn}</span><span class="nav-badge">${tables.size}</span>`;
-    div.onclick = () => selectMenu(mn);
-    navList.appendChild(div);
+
+  // Build 3-level navigation: dbname -> systno -> menunum
+  const dbGroups = {};
+  TBLDEF.forEach(r => {
+    if (!dbGroups[r.db]) dbGroups[r.db] = {};
+    if (!dbGroups[r.db][r.sys]) dbGroups[r.db][r.sys] = new Set();
+    dbGroups[r.db][r.sys].add(r.mn);
   });
-  // Auto-select first menu
-  selectMenu(MENU_ORDER[0]);
+
+  Object.keys(dbGroups).forEach(db => {
+    const dbHeader = document.createElement('div');
+    dbHeader.className = 'db-header';
+    dbHeader.textContent = db;
+    navList.appendChild(dbHeader);
+
+    const sysList = Object.keys(dbGroups[db]).sort((a,b) => {
+      const ia = SYS_ORDER.indexOf(a), ib = SYS_ORDER.indexOf(b);
+      return (ia===-1?99:ia) - (ib===-1?99:ib);
+    });
+
+    sysList.forEach(sys => {
+      const menus = [...dbGroups[db][sys]].sort();
+      const group = document.createElement('div');
+      group.className = 'sys-group';
+
+      const sysHeader = document.createElement('div');
+      sysHeader.className = 'sys-header';
+      sysHeader.innerHTML = '<span class="sys-arrow">&#9654;</span><span class="sys-code">' + sys + '</span><span class="sys-label">' + (SYS_LABELS[sys]||sys) + '</span><span class="sys-badge">' + menus.length + '</span>';
+      sysHeader.onclick = function() { sysHeader.classList.toggle('open'); };
+      group.appendChild(sysHeader);
+
+      const items = document.createElement('div');
+      items.className = 'sys-items';
+      menus.forEach(mn => {
+        const rels = TBLDEF.filter(r => r.mn === mn && r.sys === sys);
+        const tables = new Set();
+        rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
+        const div = document.createElement('div');
+        div.className = 'nav-item';
+        div.dataset.mn = mn;
+        div.dataset.sys = sys;
+        div.innerHTML = '<span class="nav-code">' + mn + '</span><span class="nav-label">' + (MENU_LABELS[mn]||mn) + '</span><span class="nav-badge">' + tables.size + '</span>';
+        div.onclick = function() { selectMenu(mn, sys); };
+        items.appendChild(div);
+      });
+      group.appendChild(items);
+      navList.appendChild(group);
+    });
+  });
+
+  // Auto-open first system group and select first menu
+  const firstSysHeader = navList.querySelector('.sys-header');
+  if (firstSysHeader) {
+    firstSysHeader.classList.add('open');
+    const firstItem = navList.querySelector('.nav-item');
+    if (firstItem) selectMenu(firstItem.dataset.mn, firstItem.dataset.sys);
+  }
 }
 
-function selectMenu(mn) {
+function selectMenu(mn, sys) {
   currentMenu = mn;
-  // Update nav active state
+  currentSys = sys;
+
   document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.mn === mn);
+    el.classList.toggle('active', el.dataset.mn === mn && el.dataset.sys === sys);
   });
-  // Update topbar
+  // Auto-open parent sys-group
+  document.querySelectorAll('.sys-header').forEach(el => {
+    const code = el.querySelector('.sys-code');
+    if (code && code.textContent === sys) el.classList.add('open');
+  });
+
   const topbar = document.getElementById('topbar');
-  const rels = TBLDEF.filter(r => r.mn === mn);
+  const rels = TBLDEF.filter(r => r.mn === mn && r.sys === sys);
   const tables = new Set();
   rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
-  topbar.innerHTML = `<h1>${mn} ${MENU_LABELS[mn]||''}</h1><span class="sub">${tables.size} 張資料表 · ${rels.length} 條關聯</span>`;
-  // Render ERD
-  renderERD(mn);
+  topbar.innerHTML = '<span class="breadcrumb">' + sys + '</span><h1>' + mn + ' ' + (MENU_LABELS[mn]||'') + '</h1><span class="sub">' + tables.size + ' 張資料表 &middot; ' + rels.length + ' 條關聯</span>';
+
+  renderERD(mn, sys);
 }
 
 function isKeyCol(col, keys) {
   if (!keys) return false;
-  const keyArr = keys.split(',').map(k => k.trim());
-  for (const key of keyArr) {
+  var keyArr = keys.split(',').map(function(k){ return k.trim(); });
+  for (var i = 0; i < keyArr.length; i++) {
+    var key = keyArr[i];
     if (col.f === key) return true;
     if (col.c === key) return true;
-    // Handle captions with trailing suffix like 契約編號F → 契約編號
     if (col.c.replace(/[A-Z]$/, '') === key) return true;
+    if (key.length >= 3 && col.f.toLowerCase().indexOf(key.toLowerCase()) === 0) return true;
+    if (col.f.toLowerCase() === key.toLowerCase()) return true;
   }
   return false;
 }
 
-function getTableDesc(mn, tableName) {
-  // Get description from TBLDEF for this menunum context
-  const asChild = TBLDEF.find(r => r.mn === mn && r.child === tableName);
-  const asParent = TBLDEF.find(r => r.mn === mn && r.parent === tableName);
+function getTableDesc(mn, sys, tableName) {
+  var asChild = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.child === tableName; });
+  var asParent = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.parent === tableName; });
   return (asChild && asChild.cdesc) || (asParent && asParent.pdesc) || tableName;
 }
 
-function getTableKeys(mn, tableName) {
-  // Collect all FK keys for this table in this menunum
-  const keys = new Set();
-  TBLDEF.filter(r => r.mn === mn).forEach(r => {
-    if (r.child === tableName) r.ckeys.split(',').forEach(k => keys.add(k.trim()));
-    if (r.parent === tableName) r.pkeys.split(',').forEach(k => keys.add(k.trim()));
+function getTableKeys(mn, sys, tableName) {
+  var keys = new Set();
+  TBLDEF.filter(function(r){ return r.mn === mn && r.sys === sys; }).forEach(function(r) {
+    if (r.child === tableName) r.ckeys.split(',').forEach(function(k){ keys.add(k.trim()); });
+    if (r.parent === tableName) r.pkeys.split(',').forEach(function(k){ keys.add(k.trim()); });
   });
-  return [...keys];
+  return Array.from(keys);
 }
 
-function computeLayout(mn) {
-  const rels = TBLDEF.filter(r => r.mn === mn);
-  const isChild = new Set(), isParent = new Set();
-  const allTables = new Set();
+function computeLayout(mn, sys) {
+  var rels = TBLDEF.filter(function(r){ return r.mn === mn && r.sys === sys; });
+  var isChild = new Set(), isParent = new Set();
+  var allTables = new Set();
 
-  // Deduplicate: same child→parent pair in same menunum (A01 has eep_iwd_10→eep_iwh twice)
-  const seen = new Set();
-  const uniqueRels = [];
-  rels.forEach(r => {
-    const sig = r.child + '→' + r.parent;
-    if (!seen.has(sig)) {
-      seen.add(sig);
-      uniqueRels.push(r);
-    }
+  var seen = new Set();
+  var uniqueRels = [];
+  rels.forEach(function(r) {
+    var sig = r.child + '\u2192' + r.parent;
+    if (!seen.has(sig)) { seen.add(sig); uniqueRels.push(r); }
   });
 
-  uniqueRels.forEach(r => {
+  uniqueRels.forEach(function(r) {
     isChild.add(r.child);
     isParent.add(r.parent);
     allTables.add(r.child);
     allTables.add(r.parent);
   });
 
-  const pureParents = [...allTables].filter(t => isParent.has(t) && !isChild.has(t));
-  const middle = [...allTables].filter(t => isParent.has(t) && isChild.has(t));
-  const pureChildren = [...allTables].filter(t => isChild.has(t) && !isParent.has(t));
+  var pureParents = Array.from(allTables).filter(function(t){ return isParent.has(t) && !isChild.has(t); });
+  var middle = Array.from(allTables).filter(function(t){ return isParent.has(t) && isChild.has(t); });
+  var pureChildren = Array.from(allTables).filter(function(t){ return isChild.has(t) && !isParent.has(t); });
 
-  const columns = [];
+  var columns = [];
   if (pureParents.length) columns.push(pureParents);
   if (middle.length) columns.push(middle);
   if (pureChildren.length) columns.push(pureChildren);
 
-  // If there's only 1 column (shouldn't happen with rels), center it
   if (columns.length === 0) return { positions: {}, rels: uniqueRels };
 
-  const positions = {};
-  const colSpacing = 400;
-  const startX = 60;
+  var positions = {};
+  var colSpacing = 400;
+  var startX = 60;
 
-  columns.forEach((col, ci) => {
-    // Compute card heights first to distribute vertically
-    const heights = col.map(t => getCardHeight(t, mn));
-    const totalH = heights.reduce((a, b) => a + b, 0) + (col.length - 1) * 40;
-    let y = 40;
-
-    col.forEach((tableName, ti) => {
-      const role = (isParent.has(tableName) && !isChild.has(tableName)) ? 'parent' :
-                   (isChild.has(tableName) && !isParent.has(tableName)) ? 'child' : 'both';
-      positions[tableName] = { x: startX + ci * colSpacing, y, role };
-      y += heights[ti] + 40;
+  columns.forEach(function(col, ci) {
+    var y = 40;
+    col.forEach(function(tableName, ti) {
+      var h = getCardHeight(tableName, mn, sys);
+      var role = (isParent.has(tableName) && !isChild.has(tableName)) ? 'parent' :
+                 (isChild.has(tableName) && !isParent.has(tableName)) ? 'child' : 'both';
+      positions[tableName] = { x: startX + ci * colSpacing, y: y, role: role };
+      y += h + 40;
     });
   });
 
-  return { positions, rels: uniqueRels };
+  return { positions: positions, rels: uniqueRels };
 }
 
-function getCardHeight(tableName, mn) {
-  const cols = COLDEF[tableName] || [];
-  const keys = getTableKeys(mn, tableName);
-  // Filter: show key columns first, then others, max 22
-  const MAX = 22;
-  const visible = Math.min(cols.length, MAX);
+function getCardHeight(tableName, mn, sys) {
+  var cols = COLDEF[tableName] || [];
+  var MAX = 22;
+  var visible = Math.min(cols.length, MAX);
   return 42 + visible * 24 + (cols.length > MAX ? 28 : 0) + 8;
 }
 
-// Current ERD state for redrawing lines after drag
-let currentCardElements = {};
-let currentRels = [];
-
-function renderERD(mn) {
-  const canvas = document.getElementById('canvas');
-  const welcome = document.getElementById('welcome');
+function renderERD(mn, sys) {
+  var canvas = document.getElementById('canvas');
+  var welcome = document.getElementById('welcome');
   welcome.style.display = 'none';
 
-  // Clear existing cards and SVG
-  canvas.querySelectorAll('.card').forEach(el => el.remove());
-  const svg = document.getElementById('svgLayer');
+  canvas.querySelectorAll('.card').forEach(function(el){ el.remove(); });
+  var svg = document.getElementById('svgLayer');
   svg.innerHTML = '';
 
-  const { positions, rels } = computeLayout(mn);
-  currentRels = rels;
+  var layout = computeLayout(mn, sys);
+  var positions = layout.positions;
+  currentRels = layout.rels;
 
-  // Determine canvas size
-  let maxX = 800, maxY = 600;
-  Object.values(positions).forEach(p => {
+  var maxX = 800, maxY = 600;
+  Object.values(positions).forEach(function(p) {
     maxX = Math.max(maxX, p.x + 380);
     maxY = Math.max(maxY, p.y + 600);
   });
@@ -693,27 +859,24 @@ function renderERD(mn) {
   svg.setAttribute('width', maxX);
   svg.setAttribute('height', maxY);
 
-  // Render cards
-  const cardElements = {};
-  Object.entries(positions).forEach(([tableName, pos]) => {
-    const card = createCard(tableName, mn, pos);
+  var cardElements = {};
+  Object.entries(positions).forEach(function(entry) {
+    var tableName = entry[0], pos = entry[1];
+    var card = createCard(tableName, mn, sys, pos);
     canvas.appendChild(card);
     cardElements[tableName] = card;
     makeDraggable(card, canvas, svg);
   });
   currentCardElements = cardElements;
 
-  // Render relationship lines
-  setTimeout(() => {
-    redrawLines();
-  }, 50);
+  setTimeout(function(){ redrawLines(); }, 50);
 }
 
 function resizeCanvas() {
-  const canvas = document.getElementById('canvas');
-  const svg = document.getElementById('svgLayer');
-  let maxX = 800, maxY = 600;
-  canvas.querySelectorAll('.card').forEach(card => {
+  var canvas = document.getElementById('canvas');
+  var svg = document.getElementById('svgLayer');
+  var maxX = 800, maxY = 600;
+  canvas.querySelectorAll('.card').forEach(function(card) {
     maxX = Math.max(maxX, card.offsetLeft + card.offsetWidth + 60);
     maxY = Math.max(maxY, card.offsetTop + card.offsetHeight + 60);
   });
@@ -724,18 +887,17 @@ function resizeCanvas() {
 }
 
 function redrawLines() {
-  const svg = document.getElementById('svgLayer');
+  var svg = document.getElementById('svgLayer');
   svg.innerHTML = '';
-  currentRels.forEach((r, idx) => {
+  currentRels.forEach(function(r, idx) {
     drawRelLine(svg, currentCardElements, r, idx);
   });
 }
 
 function makeDraggable(card, canvas, svg) {
-  let isDragging = false, startX, startY, origLeft, origTop;
+  var isDragging = false, startX, startY, origLeft, origTop;
 
-  card.addEventListener('mousedown', (e) => {
-    // Don't drag if clicking on scrollbar inside card-body
+  card.addEventListener('mousedown', function(e) {
     if (e.target.closest('.card-body') && e.offsetX > e.target.clientWidth) return;
     isDragging = true;
     card.classList.add('dragging');
@@ -746,16 +908,16 @@ function makeDraggable(card, canvas, svg) {
     e.preventDefault();
   });
 
-  document.addEventListener('mousemove', (e) => {
+  document.addEventListener('mousemove', function(e) {
     if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
     card.style.left = Math.max(0, origLeft + dx) + 'px';
     card.style.top = Math.max(0, origTop + dy) + 'px';
     redrawLines();
   });
 
-  document.addEventListener('mouseup', () => {
+  document.addEventListener('mouseup', function() {
     if (!isDragging) return;
     isDragging = false;
     card.classList.remove('dragging');
@@ -764,45 +926,47 @@ function makeDraggable(card, canvas, svg) {
   });
 }
 
-function createCard(tableName, mn, pos) {
-  const card = document.createElement('div');
+function createCard(tableName, mn, sys, pos) {
+  var card = document.createElement('div');
   card.className = 'card';
   card.style.left = pos.x + 'px';
   card.style.top = pos.y + 'px';
   card.id = 'card-' + tableName.replace(/[^a-zA-Z0-9_]/g, '_');
 
-  const desc = getTableDesc(mn, tableName);
-  const keys = getTableKeys(mn, tableName);
-  const keyJoin = keys.join(',');
+  var desc = getTableDesc(mn, sys, tableName);
+  var keys = getTableKeys(mn, sys, tableName);
+  var keyJoin = keys.join(',');
 
-  const headerColor = pos.role === 'parent' ? PARENT_COLOR :
-                      pos.role === 'child' ? CHILD_COLOR : MIDDLE_COLOR;
-  const roleName = pos.role === 'parent' ? '主檔' :
-                   pos.role === 'child' ? '明細' : '中間';
+  var headerColor = pos.role === 'parent' ? PARENT_COLOR :
+                    pos.role === 'child' ? CHILD_COLOR : MIDDLE_COLOR;
+  var roleName = pos.role === 'parent' ? '主檔' :
+                 pos.role === 'child' ? '明細' : '中間';
 
-  // Build columns
-  const cols = COLDEF[tableName] || [];
-  const MAX = 22;
+  var cols = COLDEF[tableName] || [];
+  var MAX = 22;
 
-  let html = `<div class="card-header" style="background:${headerColor}">
-    <span class="tbl-name">${tableName}</span>
-    <span class="tbl-desc">${desc}</span>
-    <span class="role-badge">${roleName}</span>
-  </div><div class="card-body">`;
+  var html = '<div class="card-header" style="background:' + headerColor + '">' +
+    '<span class="tbl-name">' + tableName + '</span>' +
+    '<span class="tbl-desc">' + desc + '</span>' +
+    '<span class="role-badge">' + roleName + '</span>' +
+    '</div><div class="card-body">';
 
-  const shown = cols.slice(0, MAX);
-  shown.forEach(col => {
-    const isFk = isKeyCol(col, keyJoin);
-    html += `<div class="col-row${isFk ? ' fk-row' : ''}">
-      <span class="col-icon">${isFk ? '🔑' : ''}</span>
-      <span class="col-field">${col.f}</span>
-      <span class="col-caption">${col.c}</span>
-    </div>`;
+  var shown = cols.slice(0, MAX);
+  shown.forEach(function(col) {
+    var isFk = isKeyCol(col, keyJoin);
+    html += '<div class="col-row' + (isFk ? ' fk-row' : '') + '">' +
+      '<span class="col-icon">' + (isFk ? '&#128273;' : '') + '</span>' +
+      '<span class="col-field">' + col.f + '</span>' +
+      '<span class="col-caption">' + col.c + '</span>' +
+      '</div>';
   });
 
   html += '</div>';
   if (cols.length > MAX) {
-    html += `<div class="card-footer">... 還有 ${cols.length - MAX} 個欄位</div>`;
+    html += '<div class="card-footer">... 還有 ' + (cols.length - MAX) + ' 個欄位</div>';
+  }
+  if (cols.length === 0) {
+    html += '<div class="card-footer" style="color:#dc2626">尚無欄位定義</div>';
   }
 
   card.innerHTML = html;
@@ -810,59 +974,51 @@ function createCard(tableName, mn, pos) {
 }
 
 function drawRelLine(svg, cardElements, rel, idx) {
-  const childCard = cardElements[rel.child];
-  const parentCard = cardElements[rel.parent];
+  var childCard = cardElements[rel.child];
+  var parentCard = cardElements[rel.parent];
   if (!childCard || !parentCard) return;
 
-  // Use offsetLeft/Top for stable positioning after drag
-  const cL = childCard.offsetLeft, cT = childCard.offsetTop;
-  const cW = childCard.offsetWidth, cH = childCard.offsetHeight;
-  const pL = parentCard.offsetLeft, pT = parentCard.offsetTop;
-  const pW = parentCard.offsetWidth, pH = parentCard.offsetHeight;
+  var cL = childCard.offsetLeft, cT = childCard.offsetTop;
+  var cW = childCard.offsetWidth, cH = childCard.offsetHeight;
+  var pL = parentCard.offsetLeft, pT = parentCard.offsetTop;
+  var pW = parentCard.offsetWidth, pH = parentCard.offsetHeight;
 
-  const childCenterX = cL + cW / 2;
-  const parentCenterX = pL + pW / 2;
+  var childCenterX = cL + cW / 2;
+  var parentCenterX = pL + pW / 2;
 
-  let x1, y1, x2, y2;
-  const offset = idx * 12;
+  var x1, y1, x2, y2;
+  var offset = idx * 12;
 
   if (childCenterX > parentCenterX) {
-    x1 = cL;
-    y1 = cT + 42 + offset;
-    x2 = pL + pW;
-    y2 = pT + 42 + offset;
+    x1 = cL; y1 = cT + 42 + offset;
+    x2 = pL + pW; y2 = pT + 42 + offset;
   } else {
-    x1 = cL + cW;
-    y1 = cT + 42 + offset;
-    x2 = pL;
-    y2 = pT + 42 + offset;
+    x1 = cL + cW; y1 = cT + 42 + offset;
+    x2 = pL; y2 = pT + 42 + offset;
   }
 
-  const color = LINE_COLORS[idx % LINE_COLORS.length];
-  const midX = (x1 + x2) / 2;
+  var color = LINE_COLORS[idx % LINE_COLORS.length];
+  var midX = (x1 + x2) / 2;
 
-  // Bezier curve
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`);
+  var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + midX + ' ' + y1 + ', ' + midX + ' ' + y2 + ', ' + x2 + ' ' + y2);
   path.setAttribute('class', 'rel-line');
   path.setAttribute('stroke', color);
   path.setAttribute('data-child', rel.child);
   path.setAttribute('data-parent', rel.parent);
 
-  // Crow's foot at child end (many side)
-  const cfSize = 10;
-  const cfDir = childCenterX > parentCenterX ? -1 : 1;
-  const cf = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  var cfSize = 10;
+  var cfDir = childCenterX > parentCenterX ? -1 : 1;
+  var cf = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   cf.setAttribute('class', 'crow-foot');
   cf.setAttribute('stroke', color);
-  // Three lines forming crow's foot
-  const lines = [
-    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1 - cfSize}`,
-    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1}`,
-    `M ${x1} ${y1} L ${x1 + cfDir*cfSize} ${y1 + cfSize}`
+  var lines = [
+    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 - cfSize),
+    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + y1,
+    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 + cfSize)
   ];
-  lines.forEach(d => {
-    const l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  lines.forEach(function(d) {
+    var l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     l.setAttribute('d', d);
     l.setAttribute('stroke', color);
     l.setAttribute('stroke-width', '2');
@@ -870,8 +1026,7 @@ function drawRelLine(svg, cardElements, rel, idx) {
     cf.appendChild(l);
   });
 
-  // One-side indicator at parent end (circle)
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   circle.setAttribute('cx', x2);
   circle.setAttribute('cy', y2);
   circle.setAttribute('r', 4);
@@ -879,10 +1034,9 @@ function drawRelLine(svg, cardElements, rel, idx) {
   circle.setAttribute('stroke', color);
   circle.setAttribute('stroke-width', 2);
 
-  // Label
-  const labelX = midX;
-  const labelY = (y1 + y2) / 2 - 8;
-  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  var labelX = midX;
+  var labelY = (y1 + y2) / 2 - 8;
+  var label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   label.setAttribute('x', labelX);
   label.setAttribute('y', labelY);
   label.setAttribute('text-anchor', 'middle');
@@ -890,17 +1044,15 @@ function drawRelLine(svg, cardElements, rel, idx) {
   label.setAttribute('class', 'rel-label');
   label.textContent = rel.ckeys;
 
-  // Background rect for label
-  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 
   svg.appendChild(path);
   svg.appendChild(cf);
   svg.appendChild(circle);
   svg.appendChild(label);
 
-  // After text is rendered, add background
-  setTimeout(() => {
-    const bbox = label.getBBox();
+  setTimeout(function() {
+    var bbox = label.getBBox();
     if (bbox.width > 0) {
       bg.setAttribute('x', bbox.x - 4);
       bg.setAttribute('y', bbox.y - 2);
@@ -912,20 +1064,18 @@ function drawRelLine(svg, cardElements, rel, idx) {
     }
   }, 10);
 
-  // Hover highlighting
-  path.addEventListener('mouseenter', () => {
+  path.addEventListener('mouseenter', function() {
     path.setAttribute('stroke-width', '3.5');
-    if (childCard) childCard.style.boxShadow = `0 0 0 3px ${color}, 0 4px 16px rgba(0,0,0,.2)`;
-    if (parentCard) parentCard.style.boxShadow = `0 0 0 3px ${color}, 0 4px 16px rgba(0,0,0,.2)`;
+    if (childCard) childCard.style.boxShadow = '0 0 0 3px ' + color + ', 0 4px 16px rgba(0,0,0,.2)';
+    if (parentCard) parentCard.style.boxShadow = '0 0 0 3px ' + color + ', 0 4px 16px rgba(0,0,0,.2)';
   });
-  path.addEventListener('mouseleave', () => {
+  path.addEventListener('mouseleave', function() {
     path.setAttribute('stroke-width', '2');
     if (childCard) childCard.style.boxShadow = '';
     if (parentCard) parentCard.style.boxShadow = '';
   });
 }
 
-// Initialize
 init();
 </script>
 </body>
