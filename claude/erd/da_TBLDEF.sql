@@ -6,6 +6,15 @@ GO
 
 insert into [TBLDEF](dbname,systno,menunum,
 childTable,childTableDesc,childkeys,hasparent,reltype,parentTable,parentTableDesc,parentkeys) values
+('acpay','WMS','62K','tr_011_eep_trd_mes_itio','繳料異動','eep_trd'          ,'Y','G','mes_itio'  ,'庫存異動','tr_mes_itio_sync'),
+('acpay','WMS','62J','tr_011_eep_tod_mes_itio','領料異動','eep_tod'          ,'Y','G','mes_itio'  ,'庫存異動','tr_mes_itio_sync'),
+('acpay','WMS','66D','tr_011_eep_tdd_mes_itio','調撥異動','eep_tdd'          ,'Y','G','mes_itio'  ,'庫存異動','tr_mes_itio_sync'),
+('acpay','WMS','B01','tr_011_pos_tod_mes_itio','施工異動','pos_tdd'          ,'Y','G','mes_itio'  ,'庫存異動','tr_mes_itio_sync'),
+('acpay','WMS','67Q','tr_mes_itio_level'      ,'庫存階段','mes_itio'         ,'Y','G','mes_level' ,'庫存階層','none') 
+
+
+insert into [TBLDEF](dbname,systno,menunum,
+childTable,childTableDesc,childkeys,hasparent,reltype,parentTable,parentTableDesc,parentkeys) values
 ('acpay','WMS','62K','eep_trd'      ,'繳庫明細','trno'            ,'Y','T','eep_trh'   ,'繳庫主檔','trno'            ),
 ('acpay','WMS','62J','eep_tod'      ,'領料明細','tono'            ,'Y','T','eep_toh'   ,'領料主檔','tono'            ),
 ('acpay','WMS','66D','eep_tdd'      ,'調撥明細','tdno'            ,'Y','T','eep_tdh'   ,'調撥主檔','tdno'            ),
@@ -16,8 +25,10 @@ childTable,childTableDesc,childkeys,hasparent,reltype,parentTable,parentTableDes
 ('acpay','WMS','67Q','mes_itio'     ,'庫存異動','itemno'          ,'Y','T','eep_item'  ,'物料主檔','itemno'          ),
 ('acpay','WMS','67Q','mes_itio'     ,'庫存異動','wareno'          ,'Y','T','eep_ware'  ,'倉庫代碼','wareno'          ),
 ('acpay','WMS','96D','eep_item'     ,'物料主檔','clasno'          ,'Y','T','eep_clas'  ,'物料類型','clasno'          ),
+
+
 ('acpay','HR' ,'93A','eep_empl'     ,'員工主檔','depano'          ,'Y','T','eep_depa'  ,'部門代碼','depano'          ),
-('acpay','HR' ,'93A','eep_empl'     ,'員工主檔','linenum'          ,'Y','T','eep_line'  ,'班組代碼','linenum'          ),
+('acpay','HR' ,'93A','eep_empl'     ,'員工主檔','linenum'         ,'Y','T','eep_line'  ,'班組代碼','linenum'         ),
 ('acpay','CS','A01','eep_iwd_10'    ,'服務內容','契約編號'        ,'Y','T','eep_iwh'   ,'客服通知','契約編號'        ),
 ('acpay','CS','A01','eep_iwd_20'    ,'完工回報','契約編號'        ,'Y','T','eep_iwh'   ,'客服通知','契約編號'        ),
 ('acpay','CS','A01','eep_iwd_10'    ,'補充說明','契約編號'        ,'Y','T','eep_iwh'   ,'客服通知','契約編號'        ),

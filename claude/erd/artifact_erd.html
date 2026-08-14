@@ -57,6 +57,7 @@ body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f2f5;c
 .rl:hover{stroke-width:3.5}
 .rla{font-size:10px;font-family:Consolas,monospace;pointer-events:none}
 .cff{fill:none;stroke-width:2}
+.rlg{stroke-dasharray:8 4}
 .wl{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px}
 .wl .ic{font-size:2.5rem}
 .wl p{font-size:.9rem}
@@ -81,9 +82,9 @@ body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#f0f2f5;c
     </div>
   </div>
   <div class="ib">
-    <span>TBLDEF: <strong>33</strong> 筆</span>
-    <span><strong>44</strong> 張表</span>
-    <span><strong>23</strong> 模組</span>
+    <span>TBLDEF: <strong>38</strong> 筆</span>
+    <span><strong>45</strong> 張表</span>
+    <span><strong>24</strong> 模組</span>
     <span><strong>6</strong> 子系統</span>
     <span>acpay @ 163.17.141.61:8081</span>
   </div>
@@ -100,6 +101,11 @@ var T=[
 {db:'acpay',s:'WMS',m:'96A',c:'eep_ware_empl',cd:'倉管人員',ck:'wareno',p:'eep_ware',pd:'倉庫代碼',pk:'wareno'},
 {db:'acpay',s:'WMS',m:'96A',c:'eep_posi',cd:'儲位代碼',ck:'wareno',p:'eep_ware',pd:'倉庫代碼',pk:'wareno'},
 {db:'acpay',s:'WMS',m:'96D',c:'eep_item',cd:'物料主檔',ck:'clasno',p:'eep_clas',pd:'物料類型',pk:'clasno'},
+{db:'acpay',s:'WMS',m:'62J',c:'tr_011_eep_tod_mes_itio',cd:'領料異動',ck:'eep_tod',p:'mes_itio',pd:'庫存異動',pk:'tr_mes_itio_sync',r:'G'},
+{db:'acpay',s:'WMS',m:'62K',c:'tr_011_eep_trd_mes_itio',cd:'繳料異動',ck:'eep_trd',p:'mes_itio',pd:'庫存異動',pk:'tr_mes_itio_sync',r:'G'},
+{db:'acpay',s:'WMS',m:'66D',c:'tr_011_eep_tdd_mes_itio',cd:'調撥異動',ck:'eep_tdd',p:'mes_itio',pd:'庫存異動',pk:'tr_mes_itio_sync',r:'G'},
+{db:'acpay',s:'WMS',m:'67Q',c:'tr_mes_itio_level',cd:'庫存階段',ck:'mes_itio',p:'mes_level',pd:'庫存階層',pk:'none',r:'G'},
+{db:'acpay',s:'WMS',m:'B01',c:'tr_011_pos_tod_mes_itio',cd:'施工異動',ck:'pos_tod',p:'mes_itio',pd:'庫存異動',pk:'tr_mes_itio_sync',r:'G'},
 {db:'acpay',s:'HR',m:'93A',c:'eep_empl',cd:'員工主檔',ck:'depano',p:'eep_depa',pd:'部門代碼',pk:'depano'},
 {db:'acpay',s:'HR',m:'93A',c:'eep_empl',cd:'員工主檔',ck:'linenum',p:'eep_line',pd:'班組代碼',pk:'linenum'},
 {db:'acpay',s:'CS',m:'A01',c:'eep_iwd_10',cd:'服務內容',ck:'契約編號',p:'eep_iwh',pd:'客服通知',pk:'契約編號'},
@@ -170,11 +176,13 @@ var C={
 'vw_POS_CRM_ACRTA':[{f:'TA001',c:'結帳單別'},{f:'TA002',c:'結帳單號'},{f:'TA003',c:'交易日期'},{f:'TA004',c:'客戶代號'},{f:'TA005',c:'收款業務員'},{f:'TA009',c:'幣別'},{f:'TA015',c:'發票號碼'},{f:'TA029',c:'應收金額'},{f:'TA031',c:'已收金額'},{f:'TA033',c:'未收金額'}],
 'vw_POS_CRM_ACRTB':[{f:'TB001',c:'結帳單別'},{f:'TB002',c:'結帳單號'},{f:'TB003',c:'序號'},{f:'TB004',c:'來源'},{f:'TB005',c:'憑證單別'},{f:'TB006',c:'憑證單號'},{f:'TB008',c:'憑證日期'},{f:'TB009',c:'應收金額'},{f:'TB011',c:'備註'}],
 'vw_POS_CRM_ACRTC':[{f:'TC001',c:'收款單別'},{f:'TC002',c:'收款單號'},{f:'TC003',c:'收款日期'},{f:'TC004',c:'客戶代號'},{f:'TC005',c:'幣別'},{f:'TC011',c:'原幣借方金額'},{f:'TC012',c:'原幣貸方金額'},{f:'TC015',c:'收款業務員'}],
-'vw_POS_CRM_ACRTD':[{f:'TD001',c:'收款單別'},{f:'TD002',c:'收款單號'},{f:'TD003',c:'序號'},{f:'TD004',c:'借貸'},{f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD012',c:'立帳金額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'}]
+'vw_POS_CRM_ACRTD':[{f:'TD001',c:'收款單別'},{f:'TD002',c:'收款單號'},{f:'TD003',c:'序號'},{f:'TD004',c:'借貸'},{f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD012',c:'立帳金額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'}],
+'mes_level':[{f:'compno',c:'公司代碼'},{f:'plantno',c:'工廠代碼'},{f:'wareno',c:'倉庫代碼'},{f:'posino',c:'儲位代碼'}]
 };
 var PC='#2563eb',CC='#059669',MC='#7c3aed';
 var LC=['#6366f1','#2563eb','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#be185d'];
 var cM=null,cS=null,cCE={},cR=[];
+function eC(r){return r.r==='G'?r.ck:r.c;}
 
 function init(){
   var nv=document.getElementById('nv');
@@ -197,7 +205,7 @@ function init(){
       var si=document.createElement('div');si.className='si';
       ms.forEach(function(mn){
         var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
-        var tb=new Set();rl.forEach(function(r){tb.add(r.c);tb.add(r.p);});
+        var tb=new Set();rl.forEach(function(r){tb.add(eC(r));tb.add(r.p);});
         var d=document.createElement('div');d.className='ni';d.dataset.mn=mn;d.dataset.sys=sys;
         d.innerHTML='<span class="nc">'+mn+'</span><span class="nl">'+(ML[mn]||mn)+'</span><span class="nb">'+tb.size+'</span>';
         d.onclick=function(){sel(mn,sys);};
@@ -216,7 +224,7 @@ function sel(mn,sys){
   document.querySelectorAll('.sh').forEach(function(el){var c=el.querySelector('.sc');if(c&&c.textContent===sys)el.classList.add('o');});
   var tp=document.getElementById('tp');
   var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
-  var tb=new Set();rl.forEach(function(r){tb.add(r.c);tb.add(r.p);});
+  var tb=new Set();rl.forEach(function(r){tb.add(eC(r));tb.add(r.p);});
   tp.innerHTML='<span class="bc">'+sys+'</span><h1>'+mn+' '+(ML[mn]||'')+'</h1><span class="su">'+tb.size+' 張資料表 &middot; '+rl.length+' 條關聯</span>';
   render(mn,sys);
 }
@@ -235,14 +243,15 @@ function isFK(col,keys){
 }
 
 function gDesc(mn,sys,tn){
-  var ac=T.find(function(r){return r.m===mn&&r.s===sys&&r.c===tn;});
+  var acT=T.find(function(r){return r.m===mn&&r.s===sys&&r.r!=='G'&&r.c===tn;});
+  var acG=T.find(function(r){return r.m===mn&&r.s===sys&&r.r==='G'&&r.ck===tn;});
   var ap=T.find(function(r){return r.m===mn&&r.s===sys&&r.p===tn;});
-  return(ac&&ac.cd)||(ap&&ap.pd)||tn;
+  return(acT&&acT.cd)||(ap&&ap.pd)||(acG&&acG.cd)||tn;
 }
 
 function gKeys(mn,sys,tn){
   var ks=new Set();
-  T.filter(function(r){return r.m===mn&&r.s===sys;}).forEach(function(r){
+  T.filter(function(r){return r.m===mn&&r.s===sys&&r.r!=='G';}).forEach(function(r){
     if(r.c===tn)r.ck.split(',').forEach(function(k){ks.add(k.trim());});
     if(r.p===tn)r.pk.split(',').forEach(function(k){ks.add(k.trim());});
   });
@@ -253,8 +262,8 @@ function layout(mn,sys){
   var rl=T.filter(function(r){return r.m===mn&&r.s===sys;});
   var iC=new Set(),iP=new Set(),aT=new Set();
   var sn=new Set(),ur=[];
-  rl.forEach(function(r){var sg=r.c+'\u2192'+r.p;if(!sn.has(sg)){sn.add(sg);ur.push(r);}});
-  ur.forEach(function(r){iC.add(r.c);iP.add(r.p);aT.add(r.c);aT.add(r.p);});
+  rl.forEach(function(r){var ec=eC(r);var sg=ec+'\u2192'+r.p;if(!sn.has(sg)){sn.add(sg);ur.push(r);}});
+  ur.forEach(function(r){var ec=eC(r);iC.add(ec);iP.add(r.p);aT.add(ec);aT.add(r.p);});
   var pp=Array.from(aT).filter(function(t){return iP.has(t)&&!iC.has(t);});
   var md=Array.from(aT).filter(function(t){return iP.has(t)&&iC.has(t);});
   var pc=Array.from(aT).filter(function(t){return iC.has(t)&&!iP.has(t);});
@@ -319,7 +328,8 @@ function mkCard(tn,mn,sys,pos){
 }
 
 function dLine(sg,ce,rel,idx){
-  var cc=ce[rel.c],pc=ce[rel.p];if(!cc||!pc)return;
+  var isG=rel.r==='G';var ec=eC(rel);
+  var cc=ce[ec],pc=ce[rel.p];if(!cc||!pc)return;
   var cL=cc.offsetLeft,cT=cc.offsetTop,cW=cc.offsetWidth,pL=pc.offsetLeft,pT=pc.offsetTop,pW=pc.offsetWidth;
   var ccx=cL+cW/2,pcx=pL+pW/2,x1,y1,x2,y2,off=idx*12;
   if(ccx>pcx){x1=cL;y1=cT+38+off;x2=pL+pW;y2=pT+38+off;}
@@ -327,17 +337,29 @@ function dLine(sg,ce,rel,idx){
   var co=LC[idx%LC.length],mx=(x1+x2)/2;
   var p=document.createElementNS('http://www.w3.org/2000/svg','path');
   p.setAttribute('d','M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2);
-  p.setAttribute('class','rl');p.setAttribute('stroke',co);
+  p.setAttribute('class','rl'+(isG?' rlg':''));p.setAttribute('stroke',co);
   var cs=10,cd=ccx>pcx?-1:1;
   var cf=document.createElementNS('http://www.w3.org/2000/svg','g');cf.setAttribute('class','cff');cf.setAttribute('stroke',co);
-  ['M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1-cs),'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+y1,'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1+cs)].forEach(function(d){
-    var l=document.createElementNS('http://www.w3.org/2000/svg','path');l.setAttribute('d',d);l.setAttribute('stroke',co);l.setAttribute('stroke-width','2');l.setAttribute('fill','none');cf.appendChild(l);
-  });
-  var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.setAttribute('cx',x2);ci.setAttribute('cy',y2);ci.setAttribute('r',4);ci.setAttribute('fill','#fff');ci.setAttribute('stroke',co);ci.setAttribute('stroke-width',2);
+  if(isG){
+    var aDir=ccx>pcx?1:-1;
+    ['M '+x2+' '+y2+' L '+(x2+aDir*cs)+' '+(y2-cs),'M '+x2+' '+y2+' L '+(x2+aDir*cs)+' '+(y2+cs)].forEach(function(d){
+      var l=document.createElementNS('http://www.w3.org/2000/svg','path');l.setAttribute('d',d);l.setAttribute('stroke',co);l.setAttribute('stroke-width','2');l.setAttribute('fill','none');cf.appendChild(l);
+    });
+  }else{
+    ['M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1-cs),'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+y1,'M '+x1+' '+y1+' L '+(x1+cd*cs)+' '+(y1+cs)].forEach(function(d){
+      var l=document.createElementNS('http://www.w3.org/2000/svg','path');l.setAttribute('d',d);l.setAttribute('stroke',co);l.setAttribute('stroke-width','2');l.setAttribute('fill','none');cf.appendChild(l);
+    });
+  }
+  sg.appendChild(p);sg.appendChild(cf);
+  if(!isG){
+    var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.setAttribute('cx',x2);ci.setAttribute('cy',y2);ci.setAttribute('r',4);ci.setAttribute('fill','#fff');ci.setAttribute('stroke',co);ci.setAttribute('stroke-width',2);
+    sg.appendChild(ci);
+  }
   var lx=mx,ly=(y1+y2)/2-8;
-  var lb=document.createElementNS('http://www.w3.org/2000/svg','text');lb.setAttribute('x',lx);lb.setAttribute('y',ly);lb.setAttribute('text-anchor','middle');lb.setAttribute('fill',co);lb.setAttribute('class','rla');lb.textContent=rel.ck;
+  var lb=document.createElementNS('http://www.w3.org/2000/svg','text');lb.setAttribute('x',lx);lb.setAttribute('y',ly);lb.setAttribute('text-anchor','middle');lb.setAttribute('fill',co);lb.setAttribute('class','rla');
+  lb.textContent=isG?rel.c:rel.ck;
   var bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
-  sg.appendChild(p);sg.appendChild(cf);sg.appendChild(ci);sg.appendChild(lb);
+  sg.appendChild(lb);
   setTimeout(function(){var bb=lb.getBBox();if(bb.width>0){bg.setAttribute('x',bb.x-3);bg.setAttribute('y',bb.y-1);bg.setAttribute('width',bb.width+6);bg.setAttribute('height',bb.height+2);bg.setAttribute('rx',3);bg.setAttribute('fill','rgba(255,255,255,.85)');sg.insertBefore(bg,lb);}},10);
   p.addEventListener('mouseenter',function(){p.setAttribute('stroke-width','3.5');if(cc)cc.style.boxShadow='0 0 0 3px '+co;if(pc)pc.style.boxShadow='0 0 0 3px '+co;});
   p.addEventListener('mouseleave',function(){p.setAttribute('stroke-width','2');if(cc)cc.style.boxShadow='';if(pc)pc.style.boxShadow='';});

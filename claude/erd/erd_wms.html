@@ -284,6 +284,7 @@
     pointer-events: none;
   }
   .crow-foot { fill: none; stroke-width: 2; }
+  .rel-line-g { stroke-dasharray: 8 4; }
   /* ── Welcome ─────────────────── */
   .welcome {
     display: flex;
@@ -329,9 +330,9 @@
     </div>
   </div>
   <div class="info-bar" id="infoBar">
-    <span>TBLDEF: <strong>33</strong> 筆關聯定義</span>
-    <span>涵蓋 <strong>44</strong> 張資料表</span>
-    <span>功能模組: <strong>23</strong> 組</span>
+    <span>TBLDEF: <strong>38</strong> 筆關聯定義</span>
+    <span>涵蓋 <strong>45</strong> 張資料表</span>
+    <span>功能模組: <strong>24</strong> 組</span>
     <span>子系統: <strong>6</strong> 組</span>
     <span>資料來源: acpay @ 163.17.141.61:8081</span>
   </div>
@@ -339,10 +340,10 @@
 
 <script>
 /* ================================================================
-   DATA — TBLDEF relationships (33 rows)
+   DATA — TBLDEF relationships (38 rows: 33 T-type + 5 G-type)
    ================================================================ */
 const TBLDEF = [
-  // WMS
+  // WMS — T-type (FK relationships)
   {db:'acpay',sys:'WMS',mn:'62J',child:'eep_tod',cdesc:'領料明細',ckeys:'tono',parent:'eep_toh',pdesc:'領料主檔',pkeys:'tono'},
   {db:'acpay',sys:'WMS',mn:'62K',child:'eep_trd',cdesc:'繳庫明細',ckeys:'trno',parent:'eep_trh',pdesc:'繳庫主檔',pkeys:'trno'},
   {db:'acpay',sys:'WMS',mn:'62K',child:'eep_plant',cdesc:'工廠代碼',ckeys:'compno',parent:'eep_comp',pdesc:'公司代碼',pkeys:'compno'},
@@ -353,6 +354,12 @@ const TBLDEF = [
   {db:'acpay',sys:'WMS',mn:'96A',child:'eep_ware_empl',cdesc:'倉管人員',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
   {db:'acpay',sys:'WMS',mn:'96A',child:'eep_posi',cdesc:'儲位代碼',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
   {db:'acpay',sys:'WMS',mn:'96D',child:'eep_item',cdesc:'物料主檔',ckeys:'clasno',parent:'eep_clas',pdesc:'物料類型',pkeys:'clasno'},
+  // WMS — G-type (trigger chain relationships)
+  {db:'acpay',sys:'WMS',mn:'62J',child:'tr_011_eep_tod_mes_itio',cdesc:'領料異動',ckeys:'eep_tod',parent:'mes_itio',pdesc:'庫存異動',pkeys:'tr_mes_itio_sync',rel:'G'},
+  {db:'acpay',sys:'WMS',mn:'62K',child:'tr_011_eep_trd_mes_itio',cdesc:'繳料異動',ckeys:'eep_trd',parent:'mes_itio',pdesc:'庫存異動',pkeys:'tr_mes_itio_sync',rel:'G'},
+  {db:'acpay',sys:'WMS',mn:'66D',child:'tr_011_eep_tdd_mes_itio',cdesc:'調撥異動',ckeys:'eep_tdd',parent:'mes_itio',pdesc:'庫存異動',pkeys:'tr_mes_itio_sync',rel:'G'},
+  {db:'acpay',sys:'WMS',mn:'67Q',child:'tr_mes_itio_level',cdesc:'庫存階段',ckeys:'mes_itio',parent:'mes_level',pdesc:'庫存階層',pkeys:'none',rel:'G'},
+  {db:'acpay',sys:'WMS',mn:'B01',child:'tr_011_pos_tod_mes_itio',cdesc:'施工異動',ckeys:'pos_tod',parent:'mes_itio',pdesc:'庫存異動',pkeys:'tr_mes_itio_sync',rel:'G'},
   // HR
   {db:'acpay',sys:'HR',mn:'93A',child:'eep_empl',cdesc:'員工主檔',ckeys:'depano',parent:'eep_depa',pdesc:'部門代碼',pkeys:'depano'},
   {db:'acpay',sys:'HR',mn:'93A',child:'eep_empl',cdesc:'員工主檔',ckeys:'linenum',parent:'eep_line',pdesc:'班組代碼',pkeys:'linenum'},
@@ -651,6 +658,9 @@ const COLDEF = {
   {f:'TD005',c:'類別'},{f:'TD006',c:'來源單別'},{f:'TD007',c:'來源單號'},{f:'TD008',c:'會計科目'},
   {f:'TD009',c:'到期日'},{f:'TD010',c:'幣別'},{f:'TD011',c:'匯率'},{f:'TD012',c:'立帳金額'},
   {f:'TD013',c:'立帳餘額'},{f:'TD014',c:'原幣金額'},{f:'TD015',c:'本國幣金額'},{f:'TD017',c:'備註'}
+],
+'mes_level':[
+  {f:'compno',c:'公司代碼'},{f:'plantno',c:'工廠代碼'},{f:'wareno',c:'倉庫代碼'},{f:'posino',c:'儲位代碼'}
 ]
 };
 
@@ -669,6 +679,10 @@ let currentMenu = null;
 let currentSys = null;
 let currentCardElements = {};
 let currentRels = [];
+
+/* G-type helper: for G-type rows, the "child table" is in ckeys (source table),
+   not in child (which holds the trigger name) */
+function effChild(r) { return r.rel === 'G' ? r.ckeys : r.child; }
 
 function init() {
   const navList = document.getElementById('navList');
@@ -708,7 +722,7 @@ function init() {
       menus.forEach(mn => {
         const rels = TBLDEF.filter(r => r.mn === mn && r.sys === sys);
         const tables = new Set();
-        rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
+        rels.forEach(r => { tables.add(effChild(r)); tables.add(r.parent); });
         const div = document.createElement('div');
         div.className = 'nav-item';
         div.dataset.mn = mn;
@@ -747,7 +761,7 @@ function selectMenu(mn, sys) {
   const topbar = document.getElementById('topbar');
   const rels = TBLDEF.filter(r => r.mn === mn && r.sys === sys);
   const tables = new Set();
-  rels.forEach(r => { tables.add(r.child); tables.add(r.parent); });
+  rels.forEach(r => { tables.add(effChild(r)); tables.add(r.parent); });
   topbar.innerHTML = '<span class="breadcrumb">' + sys + '</span><h1>' + mn + ' ' + (MENU_LABELS[mn]||'') + '</h1><span class="sub">' + tables.size + ' 張資料表 &middot; ' + rels.length + ' 條關聯</span>';
 
   renderERD(mn, sys);
@@ -768,14 +782,16 @@ function isKeyCol(col, keys) {
 }
 
 function getTableDesc(mn, sys, tableName) {
-  var asChild = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.child === tableName; });
+  // Prefer T-type desc over G-type desc
+  var asChildT = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.rel !== 'G' && r.child === tableName; });
+  var asChildG = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.rel === 'G' && r.ckeys === tableName; });
   var asParent = TBLDEF.find(function(r){ return r.mn === mn && r.sys === sys && r.parent === tableName; });
-  return (asChild && asChild.cdesc) || (asParent && asParent.pdesc) || tableName;
+  return (asChildT && asChildT.cdesc) || (asParent && asParent.pdesc) || (asChildG && asChildG.cdesc) || tableName;
 }
 
 function getTableKeys(mn, sys, tableName) {
   var keys = new Set();
-  TBLDEF.filter(function(r){ return r.mn === mn && r.sys === sys; }).forEach(function(r) {
+  TBLDEF.filter(function(r){ return r.mn === mn && r.sys === sys && r.rel !== 'G'; }).forEach(function(r) {
     if (r.child === tableName) r.ckeys.split(',').forEach(function(k){ keys.add(k.trim()); });
     if (r.parent === tableName) r.pkeys.split(',').forEach(function(k){ keys.add(k.trim()); });
   });
@@ -790,14 +806,16 @@ function computeLayout(mn, sys) {
   var seen = new Set();
   var uniqueRels = [];
   rels.forEach(function(r) {
-    var sig = r.child + '\u2192' + r.parent;
+    var ec = effChild(r);
+    var sig = ec + '\u2192' + r.parent;
     if (!seen.has(sig)) { seen.add(sig); uniqueRels.push(r); }
   });
 
   uniqueRels.forEach(function(r) {
-    isChild.add(r.child);
+    var ec = effChild(r);
+    isChild.add(ec);
     isParent.add(r.parent);
-    allTables.add(r.child);
+    allTables.add(ec);
     allTables.add(r.parent);
   });
 
@@ -975,7 +993,9 @@ function createCard(tableName, mn, sys, pos) {
 }
 
 function drawRelLine(svg, cardElements, rel, idx) {
-  var childCard = cardElements[rel.child];
+  var isG = rel.rel === 'G';
+  var ec = effChild(rel);
+  var childCard = cardElements[ec];
   var parentCard = cardElements[rel.parent];
   if (!childCard || !parentCard) return;
 
@@ -1003,9 +1023,9 @@ function drawRelLine(svg, cardElements, rel, idx) {
 
   var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + midX + ' ' + y1 + ', ' + midX + ' ' + y2 + ', ' + x2 + ' ' + y2);
-  path.setAttribute('class', 'rel-line');
+  path.setAttribute('class', 'rel-line' + (isG ? ' rel-line-g' : ''));
   path.setAttribute('stroke', color);
-  path.setAttribute('data-child', rel.child);
+  path.setAttribute('data-child', ec);
   path.setAttribute('data-parent', rel.parent);
 
   var cfSize = 10;
@@ -1013,27 +1033,48 @@ function drawRelLine(svg, cardElements, rel, idx) {
   var cf = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   cf.setAttribute('class', 'crow-foot');
   cf.setAttribute('stroke', color);
-  var lines = [
-    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 - cfSize),
-    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + y1,
-    'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 + cfSize)
-  ];
-  lines.forEach(function(d) {
-    var l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    l.setAttribute('d', d);
-    l.setAttribute('stroke', color);
-    l.setAttribute('stroke-width', '2');
-    l.setAttribute('fill', 'none');
-    cf.appendChild(l);
-  });
 
-  var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  circle.setAttribute('cx', x2);
-  circle.setAttribute('cy', y2);
-  circle.setAttribute('r', 4);
-  circle.setAttribute('fill', '#fff');
-  circle.setAttribute('stroke', color);
-  circle.setAttribute('stroke-width', 2);
+  if (isG) {
+    // G-type: arrow head at target (parent) end
+    var aDir = childCenterX > parentCenterX ? 1 : -1;
+    var arrowLines = [
+      'M ' + x2 + ' ' + y2 + ' L ' + (x2 + aDir*cfSize) + ' ' + (y2 - cfSize),
+      'M ' + x2 + ' ' + y2 + ' L ' + (x2 + aDir*cfSize) + ' ' + (y2 + cfSize)
+    ];
+    arrowLines.forEach(function(d) {
+      var l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      l.setAttribute('d', d); l.setAttribute('stroke', color);
+      l.setAttribute('stroke-width', '2'); l.setAttribute('fill', 'none');
+      cf.appendChild(l);
+    });
+  } else {
+    // T-type: crow's foot at child end, circle at parent end
+    var lines = [
+      'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 - cfSize),
+      'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + y1,
+      'M ' + x1 + ' ' + y1 + ' L ' + (x1 + cfDir*cfSize) + ' ' + (y1 + cfSize)
+    ];
+    lines.forEach(function(d) {
+      var l = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      l.setAttribute('d', d); l.setAttribute('stroke', color);
+      l.setAttribute('stroke-width', '2'); l.setAttribute('fill', 'none');
+      cf.appendChild(l);
+    });
+  }
+
+  svg.appendChild(path);
+  svg.appendChild(cf);
+
+  if (!isG) {
+    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', x2);
+    circle.setAttribute('cy', y2);
+    circle.setAttribute('r', 4);
+    circle.setAttribute('fill', '#fff');
+    circle.setAttribute('stroke', color);
+    circle.setAttribute('stroke-width', 2);
+    svg.appendChild(circle);
+  }
 
   var labelX = midX;
   var labelY = (y1 + y2) / 2 - 8;
@@ -1043,13 +1084,11 @@ function drawRelLine(svg, cardElements, rel, idx) {
   label.setAttribute('text-anchor', 'middle');
   label.setAttribute('fill', color);
   label.setAttribute('class', 'rel-label');
-  label.textContent = rel.ckeys;
+  // G-type: show trigger name; T-type: show FK column
+  label.textContent = isG ? rel.child : rel.ckeys;
 
   var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 
-  svg.appendChild(path);
-  svg.appendChild(cf);
-  svg.appendChild(circle);
   svg.appendChild(label);
 
   setTimeout(function() {
