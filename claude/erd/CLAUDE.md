@@ -9,7 +9,7 @@
 | 項目 | 說明 |
 |------|------|
 | 資料庫 | `acpay @ 163.17.141.61,8081` |
-| 關聯定義 | `TBLDEF` 表 — 32 筆 parent-child 關聯 |
+| 關聯定義 | `TBLDEF` 表 — 33 筆 parent-child 關聯 |
 | 中文欄位抬頭 | `COLDEF` 表 — `TABLE_NAME`, `FIELD_NAME`, `CAPTION` |
 | MCP 工具 | `mcp__sqlserver-nutc__query`（需指定 `db=acpay`，預設連 master） |
 
@@ -48,7 +48,7 @@
 | WMS | 62K | 一盤繳庫 | eep_trd → eep_trh, eep_plant → eep_comp | trno, compno |
 | WMS | 66D | 庫存調撥 | eep_tdd → eep_tdh | tdno |
 | WMS | 67Q | 庫存異動查詢 | mes_itio → eep_item, mes_itio → eep_ware | itemno, wareno |
-| WMS | 96A | 倉庫儲位設定 | eep_ware → eep_plant, eep_posi → eep_ware | plantno, wareno |
+| WMS | 96A | 倉庫儲位設定 | eep_ware → eep_plant, eep_ware_empl → eep_ware, eep_posi → eep_ware | plantno, wareno |
 | WMS | 96D | 物料主檔 | eep_item → eep_clas | clasno |
 | ORG | 91A | 部門代碼 | eep_depa → eep_comp, eep_depa → eep_group2 | compno, group2 |
 | ORG | 94P | 銷售群組 | eep_sdgrp → eep_sdorg | sdorg |
@@ -68,9 +68,9 @@
 | AR | 48E | 結帳單 | vw_POS_CRM_ACRTB → vw_POS_CRM_ACRTA | TB001,TB002 |
 | AR | 48F | 收款單 | vw_POS_CRM_ACRTD → vw_POS_CRM_ACRTC | TD001,TD002 |
 
-## 涵蓋資料表 (43 張)
+## 涵蓋資料表 (44 張)
 
-eep_bmd, eep_bmh, eep_clas, eep_comp, eep_d01, eep_dac, eep_depa, eep_empl, eep_group2, eep_item, eep_iwd_10, eep_iwd_20, eep_iwh, eep_line, eep_menu, eep_mmgrp, eep_mmorg, eep_num8, eep_numh, eep_plant, eep_pos, eep_posi, eep_sdgrp, eep_sdorg, eep_tdd, eep_tdh, eep_tod, eep_toh, eep_trd, eep_trh, eep_ware, groups, mes_itio, pos, pos_log, pos_tod, usergroups, users, vw_POS_CRM_ACRTA, vw_POS_CRM_ACRTB, vw_POS_CRM_ACRTC, vw_POS_CRM_ACRTD, 系統別
+eep_bmd, eep_bmh, eep_clas, eep_comp, eep_d01, eep_dac, eep_depa, eep_empl, eep_group2, eep_item, eep_iwd_10, eep_iwd_20, eep_iwh, eep_line, eep_menu, eep_mmgrp, eep_mmorg, eep_num8, eep_numh, eep_plant, eep_pos, eep_posi, eep_sdgrp, eep_sdorg, eep_tdd, eep_tdh, eep_tod, eep_toh, eep_trd, eep_trh, eep_ware, eep_ware_empl, groups, mes_itio, pos, pos_log, pos_tod, usergroups, users, vw_POS_CRM_ACRTA, vw_POS_CRM_ACRTB, vw_POS_CRM_ACRTC, vw_POS_CRM_ACRTD, 系統別
 
 ## HTML 架構
 
@@ -84,14 +84,14 @@ eep_bmd, eep_bmh, eep_clas, eep_comp, eep_d01, eep_dac, eep_depa, eep_empl, eep_
 | 關聯線 | SVG Bezier 曲線 + crow's foot (多端) + circle (一端) |
 | Hover | 滑過關聯線高亮兩端 table card |
 | 拖曳 | Table card 可自由拖曳調整位置 |
-| 底部資訊列 | 32 筆關聯 · 43 張表 · 23 模組 · 6 子系統 |
+| 底部資訊列 | 33 筆關聯 · 44 張表 · 23 模組 · 6 子系統 |
 
 ## 注意事項
 
 - COLDEF 查詢需指定 `db=acpay`，MCP 預設連 master 會報 Invalid object name
 - eep_tod/eep_toh 的 COLDEF 有大小寫重複 (eep_tod vs eep_Tod)，已手動合併
 - eep_dac、pos_tod、系統別 無 COLDEF 資料，使用 INFORMATION_SCHEMA 欄位名
-- eep_mmgrp、eep_mmorg 資料表尚未建立，ERD 顯示預設欄位結構
+- eep_ware_empl、eep_mmgrp、eep_mmorg 資料表尚未建立，ERD 顯示預設欄位結構
 - FK 鍵值可能是中文欄位名 (契約編號, 連鎖性客戶編號)
 - COLDEF CAPTION 有時帶尾碼字母 (契約編號F, 連鎖性客戶編號Y)，FK 匹配時需去尾碼
 - FK 鍵名可能是欄位前綴 (sdorg → sdorgno)，匹配時用 startsWith 比對

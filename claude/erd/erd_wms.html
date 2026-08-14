@@ -329,8 +329,8 @@
     </div>
   </div>
   <div class="info-bar" id="infoBar">
-    <span>TBLDEF: <strong>32</strong> 筆關聯定義</span>
-    <span>涵蓋 <strong>43</strong> 張資料表</span>
+    <span>TBLDEF: <strong>33</strong> 筆關聯定義</span>
+    <span>涵蓋 <strong>44</strong> 張資料表</span>
     <span>功能模組: <strong>23</strong> 組</span>
     <span>子系統: <strong>6</strong> 組</span>
     <span>資料來源: acpay @ 163.17.141.61:8081</span>
@@ -339,7 +339,7 @@
 
 <script>
 /* ================================================================
-   DATA — TBLDEF relationships (32 rows)
+   DATA — TBLDEF relationships (33 rows)
    ================================================================ */
 const TBLDEF = [
   // WMS
@@ -350,6 +350,7 @@ const TBLDEF = [
   {db:'acpay',sys:'WMS',mn:'67Q',child:'mes_itio',cdesc:'庫存異動',ckeys:'itemno',parent:'eep_item',pdesc:'物料主檔',pkeys:'itemno'},
   {db:'acpay',sys:'WMS',mn:'67Q',child:'mes_itio',cdesc:'庫存異動',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
   {db:'acpay',sys:'WMS',mn:'96A',child:'eep_ware',cdesc:'倉庫代碼',ckeys:'plantno',parent:'eep_plant',pdesc:'工廠代碼',pkeys:'plantno'},
+  {db:'acpay',sys:'WMS',mn:'96A',child:'eep_ware_empl',cdesc:'倉管人員',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
   {db:'acpay',sys:'WMS',mn:'96A',child:'eep_posi',cdesc:'儲位代碼',ckeys:'wareno',parent:'eep_ware',pdesc:'倉庫代碼',pkeys:'wareno'},
   {db:'acpay',sys:'WMS',mn:'96D',child:'eep_item',cdesc:'物料主檔',ckeys:'clasno',parent:'eep_clas',pdesc:'物料類型',pkeys:'clasno'},
   // HR

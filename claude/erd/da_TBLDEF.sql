@@ -11,6 +11,7 @@ childTable,childTableDesc,childkeys,hasparent,reltype,parentTable,parentTableDes
 ('acpay','WMS','66D','eep_tdd'      ,'調撥明細','tdno'            ,'Y','T','eep_tdh'   ,'調撥主檔','tdno'            ),
 ('acpay','WMS','62K','eep_plant'    ,'工廠代碼','compno'          ,'Y','T','eep_comp'  ,'公司代碼','compno'          ),
 ('acpay','WMS','96A','eep_ware'     ,'倉庫代碼','plantno'         ,'Y','T','eep_plant' ,'工廠代碼','plantno'         ),
+('acpay','WMS','96A','eep_ware_empl','倉管人員','wareno'          ,'Y','T','eep_ware'  ,'倉庫代碼','wareno'         ),
 ('acpay','WMS','96A','eep_posi'     ,'儲位代碼','wareno'          ,'Y','T','eep_ware'  ,'倉庫代碼','wareno'          ),
 ('acpay','WMS','67Q','mes_itio'     ,'庫存異動','itemno'          ,'Y','T','eep_item'  ,'物料主檔','itemno'          ),
 ('acpay','WMS','67Q','mes_itio'     ,'庫存異動','wareno'          ,'Y','T','eep_ware'  ,'倉庫代碼','wareno'          ),
