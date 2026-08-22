@@ -149,6 +149,32 @@ Every `eep_*` table includes:
 
 The `up_e01_zy.sql` procedure implements field-level change tracking, comparing old vs. new values and recording diffs as `舊值→新值` in the remark field.
 
+### 跨伺服器資料表同步 (claude/actest/)
+
+`sync_actest.py` — 把 source 的指定資料表單向同步到 target，每次執行都重新比對。
+完全由 schema 驅動（沒有寫死欄位名），換表 / 換庫只需改 `sync_config.json`。
+
+**目前同步的表：** `INVMA` `INVMB` `PURTG` `PURTH` `PURTI` `PURTJ`
+
+```
+1. 讀 source schema（sys.columns + PK）；target 缺表就照 source 建（含 PK、collation、DEFAULT）
+2. 兩邊各算 SELECT <PK>, HASHBYTES('SHA2_256', 全欄位串接) → {pk: hash}
+3. source有/target無→INSERT；hash不同→UPDATE；target有/source無→DELETE
+4. 只撈有異動的 PK 的完整列寫入 target（每表獨立 transaction）
+5. 再比對一次驗證差異為 0
+```
+
+| 設計要點 | 說明 |
+|----------|------|
+| target 欄位沿用 source 定序 | source 是 BIN（區分大小寫），若落到 CI_AS 的 target，`'abc'`/`'ABC'` 兩個不同 PK 會撞成同一筆 |
+| hash 前每欄明確 CONVERT | 避免不同 SQL 版本的隱含轉換格式差異；`float` 用 style 3、日期用 126、binary 用 2 |
+| NULL 哨符 `NCHAR(1)`、分隔符 `NCHAR(2)` | 沒有分隔符時 `('a','bc')` 與 `('ab','c')` 會 hash 相同 |
+| 事後自動再驗一次 | 抓「每次跑都更新同一批列」的假異動（表示 hash 表示式兩邊不一致） |
+| 前提 | 每張表都要有主鍵；identity / FK / 索引 / trigger 不在同步範圍 |
+
+用法：`python sync_actest.py [--dry-run] [--tables A,B] [--no-delete] [--schema-only]`，
+exit code 0=成功 / 1=有表失敗。詳見 `claude/actest/SKILL.md`。
+
 ## Deployment Order
 
 SQL scripts must be executed against the target database in this order:
@@ -187,6 +213,21 @@ Each SQL file follows the pattern: DROP IF EXISTS → SET options → CREATE.
 > 此環境 schema 與遠端 8081 **不同**（例如 `eep_item` 只有 13 個欄位、無 `chjernoz`），
 > 匯入前務必在此伺服器上查 `INFORMATION_SCHEMA.COLUMNS`。
 
+### actest 同步環境（source 192.168.50.7 → target 192.168.50.53,8001）
+
+| 端 | server | database | 帳密 | 版本 / 定序 |
+|----|--------|----------|------|-------------|
+| source | `192.168.50.7`（預設 1433） | **`ACTest`** | `drlee` / `ACpos#1234` | SQL 2022 / `Chinese_Taiwan_Stroke_BIN` |
+| target | `192.168.50.53,8001` | `actest` | `drlee` / `ACpos#1234` | SQL 2025 / `Chinese_Taiwan_Stroke_CI_AS` |
+
+> **資料庫名稱大小寫有差：** 192.168.50.7 的**伺服器層級定序是 BIN（區分大小寫）**，
+> 資料庫實際名稱是 `ACTest`。連 `actest` 會回報 `18456 登入失敗`（不是「找不到資料庫」），
+> 很容易誤判成帳密錯誤。先連 `master` 查 `sys.databases` 確認正確大小寫。
+
+> 這台與 `192.168.50.53,8000` 是**不同 instance**，8001 為 SQL 2025。
+
+同步程式見 `claude/actest/`（`sync_actest.py`），詳細設計見 `claude/actest/SKILL.md`。
+
 ### 本機環境
 
 | 項目 | 值 |
@@ -204,6 +245,10 @@ Each SQL file follows the pattern: DROP IF EXISTS → SET options → CREATE.
 ### 連線注意事項
 
 - **查 schema 務必用 pymssql 直連目標伺服器**，MCP 工具 `mcp__sqlserver-nutc__*` 連的是 port 8081
+- **`sys.columns.max_length` 對 `nchar`/`nvarchar` 是位元組數**，要除以 2 才是字元數
+  （`max_length=2` 代表 `nchar(1)`）；`char`/`varchar`/`binary` 則直接就是長度，`-1` 代表 `max`
+- **登入失敗 18456 不一定是帳密錯**：連到不存在的資料庫名也會回報 18456。
+  先連 `master` 確認資料庫名稱（含大小寫，BIN 定序的伺服器會區分）
 - **定序（Collation）標準為 `Chinese_Taiwan_Stroke_CI_AS`**，所有 SQL 操作遇到定序不一致時，一律轉換成此定序。JOIN、WHERE、ORDER BY 涉及中文欄位比對時加 `COLLATE Chinese_Taiwan_Stroke_CI_AS`
 - **tempdb 定序為 `Chinese_Taiwan_Stroke_90_CI_AS`**，與 acpay 不同。Trigger 內建立 `#temp` table 時，nvarchar 欄位必須加 `COLLATE Chinese_Taiwan_Stroke_CI_AS`，否則與 `inserted`/`deleted` 比對會報 collation conflict
 - nvarchar 欄位寫入中文時，值前面要加 `N` 前綴（如 `N'中文'`）

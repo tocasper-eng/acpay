@@ -1,0 +1,32 @@
+{
+  "source": {
+    "server": "192.168.50.7",
+    "port": 1433,
+    "user": "drlee",
+    "password": "ACpos#1234",
+    "database": "ACTest"
+  },
+  "target": {
+    "server": "192.168.50.53",
+    "port": 8001,
+    "user": "drlee",
+    "password": "ACpos#1234",
+    "database": "actest"
+  },
+  "tables": [
+    "INVMA",
+    "INVMB",
+    "PURTG",
+    "PURTH",
+    "PURTI",
+    "PURTJ"
+  ],
+  "options": {
+    "create_missing_tables": true,
+    "add_missing_columns": true,
+    "preserve_source_collation": true,
+    "delete_extra_rows": true,
+    "batch_size": 500,
+    "verify_after_sync": true
+  }
+}
