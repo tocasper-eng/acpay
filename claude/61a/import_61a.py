@@ -118,9 +118,11 @@ def verify(conn):
 if __name__ == '__main__':
     dedup = read_excel()
     conn  = get_conn()
-    task1_syscode(conn, dedup)
-    task2_add_bmnm(conn)
-    task3_upsert(conn, dedup)
-    verify(conn)
-    conn.close()
+    try:
+        task1_syscode(conn, dedup)
+        task2_add_bmnm(conn)
+        task3_upsert(conn, dedup)
+        verify(conn)
+    finally:
+        conn.close()
     print("完成")
