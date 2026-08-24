@@ -28,6 +28,7 @@ Directories use numeric/alphabetic prefixes mapping to business domains:
 | 97 | Manufacturing | `eep_mach` |
 | 98 | Production | `eep_wkct`, `eep_bom` |
 | 99 | System Configuration | `eep_comp`, `eep_sysp` |
+| 61A | 商品組合 BOM 主檔 | `eep_bmh`, `系統別` |
 | 62J | 一盤領用（出庫） | `eep_toh`, `eep_tod` |
 | 62K | 一盤繳庫（入庫） | `eep_trh`, `eep_trd` |
 | 66D | 庫存調發（調撥） | `eep_tdh`, `eep_tdd` |

@@ -226,6 +226,8 @@ WHERE c.clasno IS NOT NULL AND (t.clasno IS NULL OR RTRIM(t.clasno) <> RTRIM(c.c
 | `Invalid column name 'itemna'` | 欄名結尾真的有一個空白 | 寫成 `[itemna ]`；先查 INFORMATION_SCHEMA 確認 |
 | 兩筆不同大小寫的 key 只進了一筆 | char 欄位是 CI 定序 | 這是預期行為（後者覆蓋前者），匯入後主動回報 |
 | clasno 留 NULL | clasnm 在 eep_clas 找不到（如 `KDS`、空白） | **不要自行新增大類**，留 NULL 並回報使用者決定 |
+| eep_bmh 無 bmnm 欄位 | DB 只有 bmno/bmtype/系統別代號/系統別名稱 | ALTER TABLE 先新增再 upsert |
+| 複合系統別代號（NK/PA 等）在系統別表不存在 | Excel 含 / 分隔的複合代號 | Task 1 先 upsert 系統別，Task 3 JOIN 才正確 |
 
 ---
 
