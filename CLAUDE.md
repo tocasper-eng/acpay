@@ -28,7 +28,7 @@ Directories use numeric/alphabetic prefixes mapping to business domains:
 | 97 | Manufacturing | `eep_mach` |
 | 98 | Production | `eep_wkct`, `eep_bom` |
 | 99 | System Configuration | `eep_comp`, `eep_sysp` |
-| 61A | 商品組合 BOM 主檔 | `eep_bmh`, `系統別` |
+| 61A | 商品組合 BOM 主檔 | `eep_bmh`, `系統別`, `eep_bmd` |
 | 62J | 一盤領用（出庫） | `eep_toh`, `eep_tod` |
 | 62K | 一盤繳庫（入庫） | `eep_trh`, `eep_trd` |
 | 66D | 庫存調發（調撥） | `eep_tdh`, `eep_tdd` |
@@ -328,6 +328,39 @@ eep_tdd 是調撥專用明細表，使用 `td` 前綴，且有來源/目的倉�
 | `unitno` | `eep_item` | `WHERE eep_item.itemno = 資料.itemno` |
 | `warenm` | `eep_ware` | `WHERE eep_ware.wareno = 資料.wareno`；找不到時反向新增 eep_ware |
 | `clasno` | `eep_clas` | `WHERE eep_clas.clasnm = 資料.clasnm`（需 COLLATE）；查不到時留 NULL 並回報 |
+
+### 61A 商品組合（eep_bmh / 系統別）
+
+`系統別` 是 `eep_bmh` 的外鍵參照表，欄位僅 2 個：`系統別代號 nvarchar(20) NOT NULL`、`系統別名稱 nvarchar(40)`。
+
+**已知系統別代號（截至 2026-08-24）：**
+
+| 代號 | 名稱 | 來源 |
+|------|------|------|
+| BA | 餐飲軟體系統 | 既有 |
+| EI | 電子發票服務 | eep_bmh 舊資料補建（非 Excel 匯入） |
+| KDS | KDS軟體 | eep_bmh 舊資料補建（非 Excel 匯入） |
+| NK | 新餐飲管理系統 | 既有 |
+| NK/PA | NK/PA | 2026-08-24 Excel 匯入新增 |
+| PA | 餐飲管理系統(軟體租賃) | 既有 |
+| PA/PKD/PKR | PA/PKD/PKR | 2026-08-24 Excel 匯入新增 |
+| PF | 數位管理系統 | 既有 |
+| PKD | 開店快手餐飲(長期租賃) | 既有 |
+| PKR | 開店快手零售(長期租賃) | 既有 |
+| PM | 會員與訂位系統 | 既有 |
+| PR | 開店快手(短期租賃) | 既有 |
+| PS | 開店快手(快捷版租賃) | 既有 |
+| PZ | 餐飲管理系統 | 既有 |
+| PZ/PA | PZ/PA | 2026-08-24 Excel 匯入新增 |
+
+> **注意：** 匯入 `eep_bmh` 後務必執行完整性驗證：
+> ```sql
+> -- eep_bmh 所有系統別代號必須在 系統別 有對應
+> SELECT b.系統別代號 FROM eep_bmh b
+> LEFT JOIN 系統別 s ON s.系統別代號 = b.系統別代號
+> WHERE s.系統別代號 IS NULL GROUP BY b.系統別代號
+> ```
+> EI / KDS 是 eep_bmh 中既有的舊代號，不在 Excel 匯入範圍內，需手動補建到 `系統別`。
 
 ## Working with This Codebase
 
