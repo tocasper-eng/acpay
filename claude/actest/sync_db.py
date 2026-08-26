@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-actest 單向資料表同步程序
-==========================
+SQL Server 跨伺服器資料表單向同步程序
+=====================================
 
-source : 192.168.50.7        / ACTest   (Chinese_Taiwan_Stroke_BIN, SQL 2022)
-target : 192.168.50.53,8001  / actest   (Chinese_Taiwan_Stroke_CI_AS, SQL 2025)
+程式完全由 schema 驅動，沒有寫死任何欄位名或資料表名；
+要同步哪個資料庫、哪些資料表，全部看 sync_config.json。
+
+目前設定（sync_config.json）：
+
+source : 192.168.50.7        / AC   (Chinese_Taiwan_Stroke_BIN, SQL 2022)
+target : 192.168.50.53,8001  / ac   (Chinese_Taiwan_Stroke_CI_AS, SQL 2025)
 
 每次執行都會重新比對 source 與 target，單向把 source 的內容寫入 target：
 
@@ -16,11 +21,11 @@ target : 192.168.50.53,8001  / actest   (Chinese_Taiwan_Stroke_CI_AS, SQL 2025)
     5. 再比對一次驗證差異為 0
 
 用法:
-    python sync_actest.py                      # 全部資料表，實際寫入
-    python sync_actest.py --dry-run            # 只比對不寫入
-    python sync_actest.py --tables INVMA,PURTG # 指定資料表
-    python sync_actest.py --no-delete          # 不刪除 target 多出來的列
-    python sync_actest.py --schema-only        # 只建表 / 補欄位，不同步資料
+    python sync_db.py                      # 全部資料表，實際寫入
+    python sync_db.py --dry-run            # 只比對不寫入
+    python sync_db.py --tables INVMA,PURTG # 指定資料表
+    python sync_db.py --no-delete          # 不刪除 target 多出來的列
+    python sync_db.py --schema-only        # 只建表 / 補欄位，不同步資料
 
 Exit code: 0 = 全部成功，1 = 有資料表失敗。
 """
@@ -515,14 +520,14 @@ def load_config(path):
     with open(path, encoding="utf-8") as f:
         cfg = json.load(f)
     # 密碼可用環境變數覆蓋，避免只依賴檔案內的明碼
-    for key, env in (("source", "ACTEST_SRC_PWD"), ("target", "ACTEST_TGT_PWD")):
+    for key, env in (("source", "DBSYNC_SRC_PWD"), ("target", "DBSYNC_TGT_PWD")):
         if os.environ.get(env):
             cfg[key]["password"] = os.environ[env]
     return cfg
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="actest source → target 單向資料表同步")
+    ap = argparse.ArgumentParser(description="SQL Server source → target 單向資料表同步")
     ap.add_argument("--config", default=DEFAULT_CONFIG, help="設定檔路徑")
     ap.add_argument("--tables", help="只同步指定資料表，逗號分隔")
     ap.add_argument("--dry-run", action="store_true", help="只比對差異，不寫入 target")
@@ -535,8 +540,8 @@ def main(argv=None):
     log = Log(to_file=not args.no_log_file)
     started = _dt.datetime.now()
     log("=" * 68)
-    log("actest 同步開始  %s%s" % (started.strftime("%Y-%m-%d %H:%M:%S"),
-                                   "  [DRY-RUN]" if args.dry_run else ""))
+    log("資料同步開始  %s%s" % (started.strftime("%Y-%m-%d %H:%M:%S"),
+                                "  [DRY-RUN]" if args.dry_run else ""))
 
     cfg = load_config(args.config)
     opt = cfg["options"]
