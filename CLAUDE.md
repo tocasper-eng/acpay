@@ -168,13 +168,14 @@ The `up_e01_zy.sql` procedure implements field-level change tracking, comparing 
 
 | 設計要點 | 說明 |
 |----------|------|
-| target 欄位沿用 source 定序 | source 是 BIN（區分大小寫），若落到 CI_AS 的 target，`'abc'`/`'ABC'` 兩個不同 PK 會撞成同一筆 |
+| **target 欄位一律建成 `Chinese_Taiwan_Stroke_CI_AS`** | 由 `options.target_collation` 控制（`null` = 沿用 source）。source 是 BIN 較嚴格，CI_AS 不分大小寫/全半形/假名，故寫入前會先檢查主鍵是否撞鍵，有衝突就中止該表 |
+| 改定序要 `--rebuild` | 既有 target 表定序不符時程式拒絕執行；`--rebuild` 會 DROP 該表後依 source 重建重灌（只動 target） |
 | hash 前每欄明確 CONVERT | 避免不同 SQL 版本的隱含轉換格式差異；`float` 用 style 3、日期用 126、binary 用 2 |
 | NULL 哨符 `NCHAR(1)`、分隔符 `NCHAR(2)` | 沒有分隔符時 `('a','bc')` 與 `('ab','c')` 會 hash 相同 |
 | 事後自動再驗一次 | 抓「每次跑都更新同一批列」的假異動（表示 hash 表示式兩邊不一致） |
 | 前提 | 每張表都要有主鍵；identity / FK / 索引 / trigger 不在同步範圍 |
 
-用法：`python sync_db.py [--dry-run] [--tables A,B] [--no-delete] [--schema-only]`，
+用法：`python sync_db.py [--dry-run] [--tables A,B] [--no-delete] [--schema-only] [--rebuild]`，
 exit code 0=成功 / 1=有表失敗。詳見 `claude/dbsync/SKILL.md`。
 
 ## Deployment Order

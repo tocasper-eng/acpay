@@ -26,6 +26,10 @@ target : 192.168.50.53,8001  / ac   (Chinese_Taiwan_Stroke_CI_AS, SQL 2025)
     python sync_db.py --tables INVMA,PURTG # 指定資料表
     python sync_db.py --no-delete          # 不刪除 target 多出來的列
     python sync_db.py --schema-only        # 只建表 / 補欄位，不同步資料
+    python sync_db.py --rebuild            # 定序不符時 DROP 重建該表並重灌
+
+target 欄位定序由 sync_config.json 的 options.target_collation 決定
+（設 null 則沿用 source 的定序）。目前設為 Chinese_Taiwan_Stroke_CI_AS。
 
 Exit code: 0 = 全部成功，1 = 有資料表失敗。
 """
@@ -37,6 +41,7 @@ import datetime as _dt
 import io
 import json
 import os
+import re
 import sys
 import traceback
 from decimal import Decimal
@@ -194,10 +199,18 @@ def render_type(col):
     return t
 
 
-def render_column(col, preserve_collation):
+def wanted_collation(col, target_collation):
+    """這個欄位在 target 應該用什麼定序；非字元型別回傳 None。"""
+    if col.type_name not in _CHAR_TYPES or not col.collation:
+        return None
+    return target_collation or col.collation
+
+
+def render_column(col, target_collation):
     parts = [col.q, render_type(col)]
-    if preserve_collation and col.collation and col.type_name in _CHAR_TYPES:
-        parts.append("COLLATE %s" % col.collation)
+    coll = wanted_collation(col, target_collation)
+    if coll:
+        parts.append("COLLATE %s" % coll)
     if col.is_identity:
         parts.append("IDENTITY(1,1)")
     parts.append("NULL" if col.is_nullable else "NOT NULL")
@@ -206,8 +219,8 @@ def render_column(col, preserve_collation):
     return " ".join(parts)
 
 
-def build_create_ddl(schema, preserve_collation):
-    cols = [render_column(c, preserve_collation) for c in schema.columns if not c.is_computed]
+def build_create_ddl(schema, target_collation):
+    cols = [render_column(c, target_collation) for c in schema.columns if not c.is_computed]
     body = ",\n    ".join(cols)
     if schema.pk:
         body += ",\n    CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED (%s)" % (
@@ -237,6 +250,38 @@ def hash_expr_for_column(col):
     else:
         conv = "CONVERT(nvarchar(max), %s)" % col.q
     return "ISNULL(%s, %s)" % (conv, NULL_SENTINEL)
+
+
+def check_key_collisions(src, schema, target_collation, log):
+    """
+    target 定序比 source 寬鬆時，source 兩個不同的主鍵可能在 target 撞成同一筆。
+
+    例：source 是 BIN（區分大小寫），target 是 CI_AS（不分大小寫、不分全半形、
+    不分平假名片假名）。source 的 'abc' 與 'ABC' 是兩筆，寫到 target 會違反 PK。
+
+    直接在 source 上用 target 的定序 GROUP BY，讓 SQL Server 自己判斷等價性，
+    比在 Python 端模擬定序規則可靠。
+    """
+    if not target_collation:
+        return 0
+    pk_cols = [schema.by_name[n] for n in schema.pk]
+    if not any(c.type_name in _CHAR_TYPES and c.collation
+               and c.collation != target_collation for c in pk_cols):
+        return 0
+    ex = [("%s COLLATE %s" % (c.q, target_collation)) if c.type_name in _CHAR_TYPES else c.q
+          for c in pk_cols]
+    sel = ", ".join("%s AS k%d" % (e, i) for i, e in enumerate(ex))
+    grp = ", ".join(ex)
+    cur = src.cursor()
+    cur.execute("SELECT COUNT(*) FROM (SELECT %s, COUNT(*) AS n FROM %s GROUP BY %s "
+                "HAVING COUNT(*) > 1) x" % (sel, schema.q, grp))
+    n = cur.fetchone()[0]
+    if n:
+        cur.execute("SELECT TOP 5 %s, COUNT(*) AS n FROM %s GROUP BY %s HAVING COUNT(*) > 1"
+                    % (sel, schema.q, grp))
+        for r in cur.fetchall():
+            log("    衝突鍵：%s（source 有 %d 筆）" % (tuple(r[:-1]), r[-1]))
+    return n
 
 
 def build_keyhash_sql(schema):
@@ -367,20 +412,55 @@ def apply_deletes(conn, schema, keys, batch_size, log):
 # --------------------------------------------------------------------------
 # target schema alignment
 # --------------------------------------------------------------------------
-def align_target_schema(tgt, src_schema, tgt_schema, opt, dry_run, log):
+def collation_mismatches(src_schema, tgt_schema, target_collation):
+    """回傳 target 定序與設定不符的欄位名清單。"""
+    out = []
+    for c in src_schema.data_columns:
+        want = wanted_collation(c, target_collation)
+        t = tgt_schema.by_name.get(c.name)
+        if want and t and t.collation and t.collation != want:
+            out.append((c.name, t.collation, want))
+    return out
+
+
+def create_target_table(tgt, src_schema, target_collation, dry_run, log, reason):
+    ddl = build_create_ddl(src_schema, target_collation)
+    log("  %s → CREATE TABLE (%d 欄, PK=%s, collation=%s)"
+        % (reason, len(src_schema.data_columns), ",".join(src_schema.pk) or "無",
+           target_collation or "沿用 source"))
+    if dry_run:
+        log("  [dry-run] 略過建表")
+        return None
+    tgt.cursor().execute(ddl)
+    tgt.commit()
+    return read_schema(tgt, src_schema.name)
+
+
+def align_target_schema(tgt, src_schema, tgt_schema, opt, args, log):
     """確保 target 有對應的表與欄位。回傳更新後的 tgt_schema。"""
+    dry_run = args.dry_run
+    tc = opt.get("target_collation")
+
     if tgt_schema is None:
         if not opt["create_missing_tables"]:
             raise RuntimeError("target 缺少資料表 %s，且 create_missing_tables=false" % src_schema.name)
-        ddl = build_create_ddl(src_schema, opt["preserve_source_collation"])
-        log("  target 無此表 → CREATE TABLE (%d 欄, PK=%s)"
-            % (len(src_schema.data_columns), ",".join(src_schema.pk) or "無"))
+        return create_target_table(tgt, src_schema, tc, dry_run, log, "target 無此表")
+
+    # 定序不符 → 只能重建（ALTER COLUMN 改定序要先拆掉 PK 與相依索引，
+    # 而 target 是可重建的單向鏡像，直接 DROP + CREATE 更單純也更不易出錯）
+    bad = collation_mismatches(src_schema, tgt_schema, tc)
+    if bad:
+        log("  target 有 %d 個欄位定序不符（例：%s 為 %s，應為 %s）"
+            % (len(bad), bad[0][0], bad[0][1], bad[0][2]))
+        if not args.rebuild:
+            raise RuntimeError("定序不符，需加 --rebuild 重建此表（會 DROP 後依 source 重灌）")
+        log("  --rebuild → DROP TABLE 後重建")
         if dry_run:
-            log("  [dry-run] 略過建表")
+            log("  [dry-run] 略過重建")
             return None
-        tgt.cursor().execute(ddl)
+        tgt.cursor().execute("DROP TABLE %s" % tgt_schema.q)
         tgt.commit()
-        return read_schema(tgt, src_schema.name)
+        return create_target_table(tgt, src_schema, tc, dry_run, log, "重建")
 
     # 表已存在 → 比對欄位
     missing = [c for c in src_schema.data_columns if c.name not in tgt_schema.by_name]
@@ -403,7 +483,7 @@ def align_target_schema(tgt, src_schema, tgt_schema, opt, dry_run, log):
                 col = Column((c.name, c.type_name, c.max_length, c.precision, c.scale,
                               True, c.collation, False, False, None))
                 cur.execute("ALTER TABLE %s ADD %s"
-                            % (tgt_schema.q, render_column(col, opt["preserve_source_collation"])))
+                            % (tgt_schema.q, render_column(col, opt.get("target_collation"))))
             tgt.commit()
             tgt_schema = read_schema(tgt, src_schema.name)
 
@@ -429,14 +509,22 @@ def sync_table(src, tgt, table, opt, args, log):
     if not src_schema.pk:
         raise RuntimeError("source 資料表 %s 沒有主鍵，無法做差異同步" % table)
 
+    # target 定序若比 source 寬鬆，先確認不會有兩個 source 主鍵撞成一筆
+    n_coll = check_key_collisions(src, src_schema, opt.get("target_collation"), log)
+    if n_coll:
+        raise RuntimeError(
+            "source 有 %d 組主鍵在 target 定序 %s 下會撞成同一筆，無法同步。"
+            "請改用 source 定序（target_collation 設為 null）或先清理 source 資料"
+            % (n_coll, opt["target_collation"]))
+
     tgt_schema = read_schema(tgt, table)
-    tgt_schema = align_target_schema(tgt, src_schema, tgt_schema, opt, args.dry_run, log)
+    tgt_schema = align_target_schema(tgt, src_schema, tgt_schema, opt, args, log)
     if tgt_schema is None:
-        # dry-run 且 target 無此表：只能回報將全量新增
+        # dry-run 且尚未建表：只能回報將全量新增
         cur = src.cursor()
         cur.execute("SELECT COUNT(*) FROM %s" % src_schema.q)
         n = cur.fetchone()[0]
-        log("  [dry-run] target 無此表，預計新增 %d 列" % n)
+        log("  [dry-run] 預計新增 %d 列" % n)
         return dict(table=table, ins=n, upd=0, dele=0, status="dry-run")
 
     if args.schema_only:
@@ -523,6 +611,10 @@ def load_config(path):
     for key, env in (("source", "DBSYNC_SRC_PWD"), ("target", "DBSYNC_TGT_PWD")):
         if os.environ.get(env):
             cfg[key]["password"] = os.environ[env]
+    # 定序名會直接串進 SQL（COLLATE 不吃參數），先擋掉非法字元
+    tc = cfg["options"].get("target_collation")
+    if tc and not re.match(r"^[A-Za-z0-9_]+$", tc):
+        raise ValueError("target_collation 含非法字元：%r" % tc)
     return cfg
 
 
@@ -533,6 +625,8 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true", help="只比對差異，不寫入 target")
     ap.add_argument("--no-delete", action="store_true", help="不刪除 target 多出來的列")
     ap.add_argument("--schema-only", action="store_true", help="只建表 / 補欄位，不同步資料")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="target 欄位定序與設定不符時，DROP 該表後依 source 重建並重灌")
     ap.add_argument("--no-verify", action="store_true", help="同步後不再比對驗證")
     ap.add_argument("--no-log-file", action="store_true", help="不寫 logs/ 檔案")
     args = ap.parse_args(argv)

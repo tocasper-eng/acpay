@@ -31,7 +31,10 @@ python sync_db.py             # 實際同步
 
 ## 行為
 
-- target 沒有的資料表會依 source 定義自動建立（含 PK、collation、DEFAULT）
+- target 沒有的資料表會依 source 定義自動建立（含 PK、DEFAULT）
+- **target 字元欄位一律建成 `Chinese_Taiwan_Stroke_CI_AS`**（`options.target_collation`）；
+  寫入前會檢查 source 主鍵在此定序下是否會撞鍵，有衝突就中止該表
+- 既有 target 表定序不符時會拒絕執行，需加 `--rebuild` 重建（只動 target）
 - 以主鍵 + SHA2_256 逐列比對，只寫入真正有異動的列
 - source 沒有的列會從 target 刪除（`--no-delete` 可保留）
 - 每張表獨立 transaction，失敗整批 rollback 且不影響其他表

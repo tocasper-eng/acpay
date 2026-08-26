@@ -24,7 +24,7 @@
   "options": {
     "create_missing_tables": true,
     "add_missing_columns": true,
-    "preserve_source_collation": true,
+    "target_collation": "Chinese_Taiwan_Stroke_CI_AS",
     "delete_extra_rows": true,
     "batch_size": 500,
     "verify_after_sync": true

@@ -10,6 +10,16 @@
 
 ## 完成任務
 
+### 2026-08-26: target 定序改為 Chinese_Taiwan_Stroke_CI_AS
+
+原本 target 欄位沿用 source 的 `Chinese_Taiwan_Stroke_BIN`，改為一律建成
+`Chinese_Taiwan_Stroke_CI_AS`（與專案定序標準一致）。詳見下方「定序政策」。
+
+- 新增 `options.target_collation` 設定（`null` = 沿用 source），取代 `preserve_source_collation`
+- 新增 `check_key_collisions()`：寫入前檢查 source 主鍵在 target 定序下是否會撞鍵
+- 新增 `--rebuild`：定序不符時 DROP 該表後依 source 重建；不加此旗標則拒絕執行
+- 六張表已 `--rebuild` 重灌完成，880 列，全部字元欄位（328 欄）皆為 CI_AS
+
 ### 2026-08-26: 同步目標切換到正式庫 AC → ac
 
 沿用同一支程式，只改 `sync_config.json` 的 `database` 欄位即完成切換，程式邏輯零修改。
@@ -74,7 +84,9 @@
 
 | 決策 | 理由 |
 |------|------|
-| target 欄位沿用 source 的 `Chinese_Taiwan_Stroke_BIN` 定序 | source 是 BIN（區分大小寫），target DB 是 CI_AS。若不保留，source 中 `'abc'` 與 `'ABC'` 兩筆不同的 PK 在 target 會撞成同一筆 → PK violation |
+| **target 欄位一律建成 `Chinese_Taiwan_Stroke_CI_AS`** | 專案規定（見下方「定序政策」）。由 `options.target_collation` 控制，設 `null` 則沿用 source 定序 |
+| 寫入前先做主鍵衝突檢查 | CI_AS 比 source 的 BIN 寬鬆，兩個不同的 source 主鍵可能在 target 撞成一筆。寧可事前擋下並列出衝突鍵，也不要讓它變成 PK violation 或無聲併筆 |
+| 定序不符只能 DROP 重建（`--rebuild`） | `ALTER COLUMN` 改定序要先拆掉 PK 與所有相依索引；target 是可重建的單向鏡像，DROP + CREATE 更單純也更不易出錯 |
 | hash 前每個欄位都明確 `CONVERT` | 不同 SQL 版本對隱含轉換的格式化可能不同。`numeric`→`nvarchar(50)`、`float`→ style 3（17位可還原）、日期→ style 126、binary→ style 2 hex |
 | NULL 用 `NCHAR(1)` 哨符、欄位間用 `NCHAR(2)` 分隔 | 沒有分隔符時 `('a','bc')` 與 `('ab','c')` 會 hash 相同；NULL 不用哨符則與空字串無法區分 |
 | 兩邊都用 **source 的欄位清單** 算 hash | target 若多出 source 沒有的欄位，不影響比對結果 |
@@ -82,6 +94,50 @@
 | 每張表獨立 transaction | 一張表失敗不影響其他表；該表整批 rollback，不會留下半套資料 |
 | 欄位型別不同只警告不自動改 | ALTER COLUMN 有資料遺失風險，交給人決定 |
 | 缺的欄位一律以 NULL 補上 | target 既有資料無法滿足 NOT NULL |
+
+---
+
+## 定序政策（2026-08-26 起）
+
+**source 資料進入 target 時，定序一律為 `Chinese_Taiwan_Stroke_CI_AS`。**
+（與 acpay 專案的定序標準一致，見根目錄 CLAUDE.md）
+
+由 `sync_config.json` 的 `options.target_collation` 控制：
+
+```json
+"target_collation": "Chinese_Taiwan_Stroke_CI_AS"   // null = 沿用 source 定序
+```
+
+### 這件事的風險與防護
+
+source（`Chinese_Taiwan_Stroke_BIN`）比 target（`CI_AS`）嚴格。BIN 逐碼點比對，
+CI_AS 則是 **不分大小寫、不分全半形、不分平假名片假名**。因此 source 兩筆不同的主鍵，
+到 target 可能變成同一筆而違反 PK：
+
+| source 兩筆鍵 | BIN | CI_AS |
+|---------------|-----|-------|
+| `'abc'` / `'ABC'` | 不同 | **相同** |
+| `'ｄｅｆ'` / `'def'`（全形/半形） | 不同 | **相同** |
+| `'ﾊ'` / `'は'`（片假名/平假名） | 不同 | **相同** |
+
+程式在每張表寫入前呼叫 `check_key_collisions()`：直接在 source 上用 **target 的定序**
+`GROUP BY` 主鍵，讓 SQL Server 自己判斷等價性（比在 Python 端模擬定序規則可靠得多）。
+有衝突就列出衝突鍵並中止該表，不會寫進半套資料。
+
+> 實測（2026-08-26）：AC 六張表在 CI_AS 下 **0 組衝突**，可安全套用。
+> 但這是**資料相依**的結論，不是永久保證 —— 之後 source 新增資料仍可能撞鍵，
+> 所以檢查留在每次執行的流程裡，而不是一次性確認。
+
+### 切換定序的操作
+
+改了 `target_collation` 之後，既有的 target 表定序還是舊的。程式偵測到不符會**拒絕執行**
+並要求 `--rebuild`：
+
+```bash
+python sync_db.py --rebuild     # DROP 不符的表 → 依 source 重建 → 重灌全部資料
+```
+
+重建只影響 target（單向鏡像，可重建），source 不會被動到。
 
 ---
 
@@ -103,6 +159,9 @@
 
 | 測試 | 結果 |
 |------|------|
+| 定序切換：`--rebuild` 重灌 | 6 張表 DROP 重建，880 列寫入；328 個字元欄位全部為 CI_AS，0 個殘留 BIN |
+| 定序不符時**不加** `--rebuild` | 拒絕執行並指出應加旗標，exit code 1（不會硬寫） |
+| 主鍵衝突守門（造 `abc`/`ABC`、`ｄｅｆ`/`def` 測試表） | 正確抓到 2 組衝突；`target_collation` 設 null 或與 source 相同時正確跳過檢查 |
 | 首次同步（target `ac` 為空庫） | 6 張表建立完成，880 列寫入，全部 `驗證：兩邊完全一致 ✓` |
 | **冪等性**：立即再跑一次 | 新增 0 / 更新 0 / 刪除 0 — 證明跨 SQL 2022↔2025、跨定序的 hash 穩定 |
 | UPDATE 路徑：竄改 target `INVMB` 一列 | 偵測到 1 筆更新並修復 |
