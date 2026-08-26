@@ -7,14 +7,14 @@
 	sql server:192.168.50.7
 	id:drlee
 	pwd:ACpos#1234
-	database:ACTtest
+	database:AC
 </source database>
 
 <target database="">
 	sql server:192.168.50.53,8001
 	id:drlee
 	pwd:ACpos#1234
-	database:actest
+	database:ac
 </target database>
 
 <description>
@@ -35,6 +35,7 @@ PURTJ
 
 
 <須遵守行為>
+舊的 CLAUDE.md 與 SKILL.md  database 是 actest ，現在已改為  AC. 
 每次任務完成都要更新CLAUDE.md , SKILL.md 並上傳 github
 </須遵守行為>
 

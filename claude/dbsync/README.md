@@ -9,8 +9,7 @@
 
 資料表：`INVMA` `INVMB` `PURTG` `PURTH` `PURTI` `PURTJ`（共 880 列）
 
-> 目錄名 `actest` 是歷史因素（最初以 ACTest 開發測試）。程式與特定資料庫無關，
-> 同步對象一律由 `sync_config.json` 決定。
+> 程式與特定資料庫無關，同步對象一律由 `sync_config.json` 決定。
 
 ## 快速開始
 

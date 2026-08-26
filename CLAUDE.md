@@ -150,12 +150,10 @@ Every `eep_*` table includes:
 
 The `up_e01_zy.sql` procedure implements field-level change tracking, comparing old vs. new values and recording diffs as `舊值→新值` in the remark field.
 
-### 跨伺服器資料表同步 (claude/actest/)
+### 跨伺服器資料表同步 (claude/dbsync/)
 
 `sync_db.py` — 把 source 的指定資料表單向同步到 target，每次執行都重新比對。
 完全由 schema 驅動（沒有寫死欄位名或資料表名），換表 / 換庫只需改 `sync_config.json`。
-
-> **目錄名沿用 `claude/actest/` 是歷史因素**（最初用 ACTest 測試），程式本身與資料庫無關。
 
 **目前設定：** `192.168.50.7 / AC` → `192.168.50.53,8001 / ac`
 **同步的表：** `INVMA` `INVMB` `PURTG` `PURTH` `PURTI` `PURTJ`（共 880 列）
@@ -177,7 +175,7 @@ The `up_e01_zy.sql` procedure implements field-level change tracking, comparing 
 | 前提 | 每張表都要有主鍵；identity / FK / 索引 / trigger 不在同步範圍 |
 
 用法：`python sync_db.py [--dry-run] [--tables A,B] [--no-delete] [--schema-only]`，
-exit code 0=成功 / 1=有表失敗。詳見 `claude/actest/SKILL.md`。
+exit code 0=成功 / 1=有表失敗。詳見 `claude/dbsync/SKILL.md`。
 
 ## Deployment Order
 
@@ -232,7 +230,7 @@ Each SQL file follows the pattern: DROP IF EXISTS → SET options → CREATE.
 > `192.168.50.53,8001` 與 `192.168.50.53,8000` 是**不同 instance**，8001 為 SQL 2025。
 > 8001 上有 `ac` 與 `actest` 兩個資料庫（皆為同步目標，目前使用 `ac`）。
 
-同步程式見 `claude/actest/`（`sync_db.py`），詳細設計見 `claude/actest/SKILL.md`。
+同步程式見 `claude/dbsync/`（`sync_db.py`），詳細設計見 `claude/dbsync/SKILL.md`。
 
 ### 本機環境
 
