@@ -26,6 +26,7 @@ python sync_db.py             # 實際同步
 | `sync_db.py` | 主程式 |
 | `sync_config.json` | 連線設定、資料表清單、行為選項 |
 | `run_sync.bat` | Windows 工作排程器啟動檔 |
+| `CLAUDE.md` | 本模組工作脈絡（給 Claude Code 用） |
 | `SKILL.md` | 設計說明、驗證紀錄、踩坑經驗 |
 | `logs/` | 每日執行紀錄（不進版控） |
 
